@@ -1,10 +1,6 @@
 -- SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 -- Copyright (C) 2025 Петунин Лев Михайлович
 
--- НЕ ЗАБЫВАТЬ ВЫДАТЬ ПРАВА ВСЕМ ПОЛЬЗОВАТЕЛЯМ КОТОРЫМ ОНИ НУЖНЫ 
---И DB_ADMIN
-
-
 -- Создание таблицы пользователей
 CREATE TABLE users (
     user_id UUID PRIMARY KEY,

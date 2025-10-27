@@ -1,15 +1,15 @@
 openapi: 3.0.0
 info:
   title: Configuration Management API
-  description: API для у
+  description: API для авторизации пользователей
   version: 1.0.0
   contact:
-    name: Ответсвенный
+    name: Петунин Лев Михайлович
   license:
     name: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 
 servers:
-  - url: http://app-service:5000
+  - url: http://user-auth-app-service:9443
     description: Локальный сервер разработки (v1 API)
 
 paths:
