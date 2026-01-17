@@ -11,8 +11,8 @@ CREATE TABLE users (
 );
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER 
-ON TABLE users TO "DB_ADMIN";
-GRANT ALL PRIVILEGES ON users TO "DB_ADMIN";
+ON TABLE users TO "db_admin";
+GRANT ALL PRIVILEGES ON users TO "db_admin";
 
 
 -- Комментарии к таблице users
@@ -39,8 +39,8 @@ CREATE TABLE sessions (
 );
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER 
-ON TABLE sessions TO "DB_ADMIN";
-GRANT ALL PRIVILEGES ON sessions TO "DB_ADMIN";
+ON TABLE sessions TO "db_admin";
+GRANT ALL PRIVILEGES ON sessions TO "db_admin";
 
 
 -- Комментарии к таблице sessions
