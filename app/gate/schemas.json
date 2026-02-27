@@ -1,6 +1,6 @@
 {
     "/healthz": {
-        "method":["POST"],
+        "method":["GET"],
         "body": {}
     },
     "/readyz": {
