@@ -47,7 +47,7 @@ GRANT ALL PRIVILEGES ON sessions TO "db_admin";
 COMMENT ON TABLE sessions IS 'Таблица для хранения активных сессий пользователей';
 COMMENT ON COLUMN sessions.session_id IS 'Уникальный идентификатор сессии в формате UUID (генерируется автоматически)';
 COMMENT ON COLUMN sessions.user_id IS 'Ссылка на пользователя в таблице users (каскадное удаление при удалении пользователя)';
-COMMENT ON COLUMN sessions.access_token IS 'JWT токен доступа (максимальная длина 500 символов)';
+COMMENT ON COLUMN sessions.access_token_hash IS 'JWT токен доступа (максимальная длина 500 символов)';
 COMMENT ON COLUMN sessions.refresh_token_hash IS 'Хэш токена обновления (SHA-256, 64 символа)';
 COMMENT ON COLUMN sessions.user_agent IS 'Информация о браузере/устройстве пользователя (максимальная длина 200 символов)';
 COMMENT ON COLUMN sessions.ip_address IS 'IP-адрес пользователя (поддерживает IPv6, максимальная длина 45 символов)';
