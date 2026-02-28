@@ -11,9 +11,10 @@ import re
 import yaml
 import json
 import logging
+import time
 from typing import Dict, Any, Optional, List, Pattern
 from pathlib import Path
-from flask import request, current_app
+from flask import request, current_app, g
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -43,7 +44,11 @@ def load_schemas() -> List[Dict[str, Any]]:
     
     # Возвращаем из кэша, если уже загружено
     if _schemas_cache is not None:
+        logger.debug(f"Использование кэшированных схем ({len(_schemas_cache)} правил)")
         return _schemas_cache
+    
+    start_time = time.time()
+    logger.info("Начало загрузки схем валидации из schemas.yaml")
     
     try:
         # Определяем путь к файлу схем
@@ -57,9 +62,13 @@ def load_schemas() -> List[Dict[str, Any]]:
             _gate_init_error = error_msg
             raise GateValidationError(error_msg)
         
+        logger.debug(f"Загрузка файла: {schema_path}")
+        
         # Загружаем и парсим YAML
         with open(schema_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
+        
+        logger.debug("YAML файл успешно загружен")
         
         # Проверяем структуру
         if not isinstance(config, dict) or 'gate' not in config:
@@ -79,20 +88,39 @@ def load_schemas() -> List[Dict[str, Any]]:
             _gate_init_error = error_msg
             raise GateValidationError(error_msg)
         
+        logger.debug(f"Найдено {len(api_rules)} правил в конфигурации")
+        
         # Нормализуем правила
         normalized_rules = []
-        for rule in api_rules:
+        skipped_rules = 0
+        
+        for idx, rule in enumerate(api_rules):
             if isinstance(rule, dict) and 'rule' in rule:
-                normalized_rule = normalize_rule(rule['rule'])
-                normalized_rule['name'] = rule.get('name', 'unnamed')
-                normalized_rules.append(normalized_rule)
+                try:
+                    normalized_rule = normalize_rule(rule['rule'])
+                    rule_name = rule.get('name', f'unnamed_{idx}')
+                    normalized_rule['name'] = rule_name
+                    normalized_rules.append(normalized_rule)
+                    logger.debug(f"Нормализовано правило '{rule_name}': path='{normalized_rule.get('path')}', method={normalized_rule.get('method')}")
+                except Exception as e:
+                    logger.warning(f"Ошибка нормализации правила #{idx}: {e}")
+                    skipped_rules += 1
+            else:
+                logger.warning(f"Пропущено некорректное правило #{idx}: отсутствует ключ 'rule'")
+                skipped_rules += 1
         
         # Кэшируем
         _schemas_cache = normalized_rules
         _gate_healthy = True
         _gate_init_error = None
         
-        logger.info(f"Загружено {len(normalized_rules)} правил валидации")
+        load_time = time.time() - start_time
+        logger.info(f"Загружено {len(normalized_rules)} правил валидации (пропущено: {skipped_rules}) за {load_time:.3f}с")
+        
+        # Логируем список всех загруженных путей
+        paths_summary = [f"'{r.get('path')}' ({r.get('name')})" for r in normalized_rules]
+        logger.debug(f"Доступные пути: {', '.join(paths_summary)}")
+        
         return normalized_rules
         
     except yaml.YAMLError as e:
@@ -103,7 +131,7 @@ def load_schemas() -> List[Dict[str, Any]]:
         raise GateValidationError(error_msg)
     except Exception as e:
         error_msg = f"Неожиданная ошибка при загрузке схем: {str(e)}"
-        logger.error(error_msg)
+        logger.error(error_msg, exc_info=True)
         _gate_healthy = False
         _gate_init_error = error_msg
         raise GateValidationError(error_msg)
@@ -152,9 +180,11 @@ def compile_path_pattern(pattern: str) -> Pattern:
     :return: Скомпилированный паттерн
     """
     if pattern in _compiled_patterns_cache:
+        logger.debug(f"Использование кэшированного regex: {pattern}")
         return _compiled_patterns_cache[pattern]
     
     try:
+        logger.debug(f"Компиляция regex: {pattern}")
         compiled = re.compile(pattern)
         _compiled_patterns_cache[pattern] = compiled
         return compiled
@@ -172,17 +202,20 @@ def find_matching_rule(request_path: str) -> Optional[Dict]:
     """
     rules = load_schemas()
     
+    logger.debug(f"Поиск правила для пути: {request_path}")
+    
     for rule in rules:
         path_pattern = rule.get('path', '')
         if not path_pattern:
+            logger.debug(f"Правило '{rule.get('name')}' пропущено: пустой path")
             continue
         
         compiled_pattern = compile_path_pattern(path_pattern)
         if compiled_pattern.match(request_path):
-            logger.debug(f"Найдено правило '{rule.get('name')}' для пути {request_path}")
+            logger.info(f"Найдено правило '{rule.get('name')}' для пути {request_path} (pattern: {path_pattern})")
             return rule
     
-    logger.debug(f"Правило не найдено для пути: {request_path}")
+    logger.warning(f"Правило не найдено для пути: {request_path}")
     return None
 
 
@@ -200,7 +233,13 @@ def validate_method(allowed_method: Optional[str], request_method: str) -> bool:
         logger.debug("Метод не указан в правиле - доступ запрещен")
         return False
     
-    return request_method.upper() == allowed_method.upper()
+    result = request_method.upper() == allowed_method.upper()
+    if result:
+        logger.debug(f"Метод {request_method} соответствует разрешенному {allowed_method}")
+    else:
+        logger.debug(f"Метод {request_method} не соответствует разрешенному {allowed_method}")
+    
+    return result
 
 
 def validate_headers(expected_headers: List[Dict], request_headers) -> bool:
@@ -211,22 +250,31 @@ def validate_headers(expected_headers: List[Dict], request_headers) -> bool:
     :param request_headers: Заголовки запроса
     :return: True если все заголовки присутствуют и соответствуют значениям
     """
+    if not expected_headers:
+        logger.debug("Проверка заголовков не требуется")
+        return True
+    
+    logger.debug(f"Проверка {len(expected_headers)} обязательных заголовков")
+    
     for header in expected_headers:
         header_name = header.get('name', '')
         expected_value = header.get('value', '')
         
         # Проверяем наличие заголовка
         if header_name not in request_headers:
-            logger.debug(f"Отсутствует обязательный заголовок: {header_name}")
+            logger.warning(f"Отсутствует обязательный заголовок: {header_name}")
             return False
         
         # Если указано ожидаемое значение, проверяем его
         if expected_value:
             actual_value = request_headers.get(header_name, '')
             if actual_value != expected_value:
-                logger.debug(f"Заголовок {header_name} имеет значение '{actual_value}', ожидалось '{expected_value}'")
+                logger.warning(f"Заголовок {header_name} имеет значение '{actual_value}', ожидалось '{expected_value}'")
                 return False
+            else:
+                logger.debug(f"Заголовок {header_name} корректен")
     
+    logger.debug("Все заголовки прошли проверку")
     return True
 
 
@@ -241,7 +289,19 @@ def validate_field(value: Any, pattern: str) -> bool:
     try:
         # Преобразуем значение в строку для проверки
         str_value = str(value) if value is not None else ""
-        return bool(re.match(pattern, str_value))
+        
+        # Маскируем чувствительные данные в логах
+        log_value = str_value
+        if any(keyword in pattern.lower() for keyword in ['password', 'token', 'secret', 'key']):
+            log_value = '***'
+        
+        logger.debug(f"Проверка поля: значение='{log_value}', паттерн='{pattern}'")
+        
+        result = bool(re.match(pattern, str_value))
+        if not result:
+            logger.debug(f"Значение не соответствует паттерну: '{log_value}'")
+        
+        return result
     except (TypeError, re.error) as e:
         logger.debug(f"Ошибка проверки паттерна: {e}")
         return False
@@ -261,8 +321,9 @@ def validate_body_structure(expected_body: Dict, actual_body: Dict) -> bool:
     # Если тело не ожидается, проверяем что тело пустое
     if not expected_body:
         if actual_body:
-            logger.debug("Тело не ожидается, но получены данные")
+            logger.warning(f"Тело не ожидается, но получены данные: {list(actual_body.keys())}")
             return False
+        logger.debug("Тело не ожидается и не получено - OK")
         return True
     
     # Проверяем наличие всех обязательных полей и отсутствие лишних
@@ -271,19 +332,32 @@ def validate_body_structure(expected_body: Dict, actual_body: Dict) -> bool:
     
     # Если поля не совпадают - ошибка
     if expected_fields != actual_fields:
+        missing = expected_fields - actual_fields
+        extra = actual_fields - expected_fields
+        
+        if missing:
+            logger.warning(f"Отсутствуют поля: {missing}")
+        if extra:
+            logger.warning(f"Лишние поля: {extra}")
+        
         logger.debug(f"Несовпадение полей: ожидаемые {expected_fields}, полученные {actual_fields}")
         return False
+    
+    logger.debug(f"Проверка {len(expected_body)} полей тела запроса")
     
     # Проверяем каждое поле на соответствие паттерну
     for field_name, pattern in expected_body.items():
         if field_name not in actual_body:
-            logger.debug(f"Отсутствует поле: {field_name}")
+            logger.warning(f"Отсутствует поле: {field_name}")
             return False
         
         if not validate_field(actual_body[field_name], pattern):
-            logger.debug(f"Поле {field_name} не соответствует паттерну {pattern}")
+            logger.warning(f"Поле {field_name} не соответствует паттерну {pattern}")
             return False
+        
+        logger.debug(f"Поле {field_name} прошло проверку")
     
+    logger.debug("Все поля тела запроса прошли проверку")
     return True
 
 
@@ -293,17 +367,28 @@ def extract_request_body() -> Dict:
     
     :return: Словарь с данными запроса
     """
+    content_type = request.headers.get('Content-Type', 'unknown')
+    logger.debug(f"Извлечение тела запроса, Content-Type: {content_type}")
+    
     if request.is_json:
-        return request.get_json(silent=True) or {}
+        body = request.get_json(silent=True) or {}
+        logger.debug(f"JSON тело запроса: {list(body.keys())}")
+        return body
     elif request.form:
-        return request.form.to_dict()
+        body = request.form.to_dict()
+        logger.debug(f"Form данные: {list(body.keys())}")
+        return body
     elif request.data:
         # Пытаемся распарсить как JSON строку
         try:
-            return json.loads(request.data.decode('utf-8'))
+            body = json.loads(request.data.decode('utf-8'))
+            logger.debug(f"JSON из сырых данных: {list(body.keys())}")
+            return body
         except:
+            logger.debug("Не удалось распарсить сырые данные как JSON")
             return {}
     else:
+        logger.debug("Тело запроса отсутствует")
         return {}
 
 
@@ -322,9 +407,16 @@ def gate_middleware(app):
         """Перехватываем и валидируем запрос"""
         global _gate_healthy, _gate_init_error
         
+        # Сохраняем время начала обработки
+        g.start_time = time.time()
+        
+        # Логируем входящий запрос
+        logger.info(f"→ {request.method} {request.path} (IP: {request.remote_addr})")
+        
         # Проверяем состояние шлюза
         if not _gate_healthy:
-            logger.error(f"Шлюз нездоров: {_gate_init_error}. Запрос {request.path} отклонен с кодом 504")
+            error_msg = f"Шлюз нездоров: {_gate_init_error}"
+            logger.error(f"{error_msg}. Запрос {request.path} отклонен с кодом 504")
             return "Gateway initialization failed", 504
         
         try:
@@ -336,17 +428,17 @@ def gate_middleware(app):
             
             # ЕСЛИ ПРАВИЛО НЕ НАЙДЕНО - БЛОКИРУЕМ ЗАПРОС
             if rule is None:
-                logger.warning(f"Запрос отклонен: путь {request_path} не описан в schemas.yaml")
+                logger.warning(f" Запрос отклонен: путь {request_path} не описан в schemas.yaml")
                 return "", 403
             
             # Проверяем метод запроса
             if not validate_method(rule.get('method'), request.method):
-                logger.warning(f"Запрос отклонен: неверный метод {request.method} для {request_path}")
+                logger.warning(f" Запрос отклонен: неверный метод {request.method} для {request_path} (ожидался {rule.get('method')})")
                 return "", 403
             
             # Проверяем заголовки
             if not validate_headers(rule.get('headers', []), request.headers):
-                logger.warning(f"Запрос отклонен: неверные заголовки для {request_path}")
+                logger.warning(f" Запрос отклонен: неверные заголовки для {request_path}")
                 return "", 403
             
             # Получаем ожидаемую структуру тела
@@ -357,8 +449,8 @@ def gate_middleware(app):
             
             # Проверяем структуру тела
             if not validate_body_structure(expected_body, actual_body):
-                logger.warning(f"Запрос отклонен: неверная структура тела для {request_path}")
-                logger.debug(f"Ожидалось: {expected_body}, получено: {actual_body}")
+                logger.warning(f" Запрос отклонен: неверная структура тела для {request_path}")
+                logger.debug(f"Ожидалось: {expected_body}, получено: {list(actual_body.keys()) if actual_body else {}}")
                 return "", 403
             
             # Если все проверки пройдены, добавляем информацию в контекст
@@ -368,15 +460,28 @@ def gate_middleware(app):
             current_app.gate_context['validated'] = True
             current_app.gate_context['rule'] = rule.get('name')
             
-            logger.info(f"Запрос {request_path} успешно прошел валидацию по правилу '{rule.get('name')}'")
+            # Логируем успешную валидацию
+            process_time = time.time() - g.start_time
+            logger.info(f" Запрос {request.path} успешно прошел валидацию по правилу '{rule.get('name')}' (обработка: {process_time:.3f}с)")
             return None
             
         except GateValidationError as e:
-            logger.error(f"Ошибка валидации: {e}")
+            logger.error(f" Ошибка валидации: {e}")
             return "Gateway validation error", 504
         except Exception as e:
-            logger.error(f"Неожиданная ошибка при валидации запроса: {str(e)}")
+            logger.error(f" Неожиданная ошибка при валидации запроса: {str(e)}", exc_info=True)
             return "Internal gateway error", 504
+    
+    @app.after_request
+    def log_response(response):
+        """Логируем ответ после обработки запроса"""
+        if hasattr(g, 'start_time'):
+            process_time = time.time() - g.start_time
+            logger.info(f"← {response.status_code} ({process_time:.3f}с)")
+        else:
+            logger.info(f"← {response.status_code}")
+        
+        return response
     
     return app
 
@@ -389,31 +494,48 @@ def init_gate(app):
     """
     global _gate_healthy, _gate_init_error
     
+    logger.info("=" * 50)
     logger.info("Инициализация сервиса-шлюза (gate)")
+    logger.info("=" * 50)
     
     try:
         # Пробуем загрузить схемы при старте
+        start_time = time.time()
         rules = load_schemas()
-        logger.info(f"Успешно загружено {len(rules)} правил валидации")
+        load_time = time.time() - start_time
+        
+        logger.info(f" Успешно загружено {len(rules)} правил валидации за {load_time:.3f}с")
+        
+        # Выводим список правил
+        if rules:
+            logger.info("Загруженные правила:")
+            for rule in rules:
+                method = rule.get('method', 'ANY')
+                path = rule.get('path', '')
+                name = rule.get('name', 'unnamed')
+                logger.info(f"  - {method:7} {path:30} [{name}]")
         
         # Добавляем middleware
         gate_middleware(app)
         
-        logger.info("Сервис-шлюз успешно инициализирован")
+        logger.info(" Сервис-шлюз успешно инициализирован")
+        logger.info("=" * 50)
         
     except GateValidationError as e:
-        logger.error(f"Критическая ошибка инициализации шлюза: {e}")
+        logger.error(f" Критическая ошибка инициализации шлюза: {e}")
         _gate_healthy = False
         _gate_init_error = str(e)
         # Добавляем middleware даже при ошибке, чтобы он отклонял запросы
         gate_middleware(app)
-        logger.warning("Шлюз инициализирован в аварийном режиме - все запросы будут отклоняться с кодом 504")
+        logger.warning(" Шлюз инициализирован в аварийном режиме - все запросы будут отклоняться с кодом 504")
+        logger.info("=" * 50)
     except Exception as e:
-        logger.error(f"Неожиданная ошибка инициализации шлюза: {str(e)}")
+        logger.error(f" Неожиданная ошибка инициализации шлюза: {str(e)}", exc_info=True)
         _gate_healthy = False
         _gate_init_error = str(e)
         gate_middleware(app)
-        logger.warning("Шлюз инициализирован в аварийном режиме - все запросы будут отклоняться с кодом 504")
+        logger.warning(" Шлюз инициализирован в аварийном режиме - все запросы будут отклоняться с кодом 504")
+        logger.info("=" * 50)
     
     return app
 
@@ -424,8 +546,11 @@ def get_gate_status() -> Dict[str, Any]:
     
     :return: Словарь со статусом шлюза
     """
-    return {
+    status = {
         'healthy': _gate_healthy,
         'error': _gate_init_error,
         'rules_loaded': len(_schemas_cache) if _schemas_cache else 0
     }
+    
+    logger.debug(f"Запрос статуса шлюза: {status}")
+    return status
