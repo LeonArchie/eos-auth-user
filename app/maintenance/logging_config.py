@@ -47,7 +47,7 @@ def setup_logging():
     logger = logging.getLogger()
     
     # Устанавливаем уровень логирования (INFO включает INFO, WARNING, ERROR, CRITICAL)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     
     # Создаем обработчик, который выводит логи в stdout
     # (рекомендуется для Docker/Kubernetes)
