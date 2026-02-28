@@ -24,7 +24,7 @@ def _filter_sensitive_data(headers: Dict[str, str]) -> Dict[str, str]:
     Возвращает:
         Dict[str, str]: Заголовки с отфильтрованными чувствительными данными
     """
-    sensitive_keys = ['authorization', 'cookie', 'token', 'set-cookie', 'x-api-key']
+    sensitive_keys = ['authorization', 'cookie', 'token', 'set-cookie', 'x-api-key', 'api-key', 'auth-token']
     logger.debug(f"Фильтрация чувствительных данных. Ключи для фильтрации: {sensitive_keys}")
     
     filtered = {}
@@ -37,39 +37,6 @@ def _filter_sensitive_data(headers: Dict[str, str]) -> Dict[str, str]:
     
     logger.debug(f"Заголовки после фильтрации: {filtered}")
     return filtered
-
-def _log_raw_headers():
-    """
-    Детальное логирование всех заголовков входящего запроса до фильтрации
-    """
-    try:
-        raw_headers = dict(request.headers)
-        logger.debug("=== ВСЕ ЗАГОЛОВКИ ЗАПРОСА (до фильтрации) ===")
-        for key, value in raw_headers.items():
-            # Маскируем чувствительные данные даже в raw-логировании
-            if any(sensitive in key.lower() for sensitive in ['authorization', 'cookie', 'token', 'set-cookie', 'x-api-key']):
-                logger.debug(f"  {key}: ***FILTERED***")
-            else:
-                logger.debug(f"  {key}: {value}")
-        logger.debug("=== КОНЕЦ ЗАГОЛОВКОВ ЗАПРОСА ===")
-        
-        # Дополнительная статистика по заголовкам
-        logger.debug(f"Статистика заголовков: всего {len(raw_headers)} заголовков")
-        
-        # Группировка заголовков по категориям
-        auth_headers = [k for k in raw_headers.keys() if 'auth' in k.lower()]
-        cache_headers = [k for k in raw_headers.keys() if 'cache' in k.lower()]
-        content_headers = [k for k in raw_headers.keys() if 'content-' in k.lower()]
-        
-        if auth_headers:
-            logger.debug(f"Заголовки аутентификации: {auth_headers}")
-        if cache_headers:
-            logger.debug(f"Кэш-заголовки: {cache_headers}")
-        if content_headers:
-            logger.debug(f"Content-заголовки: {content_headers}")
-            
-    except Exception as e:
-        logger.error(f"Ошибка при логировании сырых заголовков: {str(e)}", exc_info=True)
 
 def _get_request_body() -> Optional[Dict[str, Any]]:
     """
@@ -143,24 +110,20 @@ def log_request_info():
     _request_start_time = time.time()
     
     try:
-        # Логирование сырых заголовков
-        _log_raw_headers()
-        
         # Фильтрация заголовков
         filtered_headers = _filter_sensitive_data(dict(request.headers))
         
         # Формирование базовой информации
         request_info = {
             'timestamp': datetime.utcnow().isoformat(),
+            'type': 'INCOMING_REQUEST',
             'method': request.method,
             'path': request.path,
             'endpoint': request.endpoint,
             'remote_addr': request.remote_addr,
             'user_agent': request.user_agent.string,
             'headers': filtered_headers,
-            'headers_count': len(request.headers),
             'query_params': dict(request.args),
-            'query_params_count': len(request.args),
             'content_type': request.content_type,
             'content_length': request.content_length,
         }
@@ -170,14 +133,7 @@ def log_request_info():
         if request_body:
             request_info['request_body'] = request_body
         
-        # Дополнительная информация о заголовках
-        if 'host' in request.headers:
-            request_info['host'] = request.headers.get('host')
-        if 'origin' in request.headers:
-            request_info['origin'] = request.headers.get('origin')
-        if 'referer' in request.headers:
-            request_info['referer'] = request.headers.get('referer')
-        
+        # Логирование входящего запроса
         logger.info(
             f"Входящий запрос:\n{json.dumps(request_info, indent=2, ensure_ascii=False)}",
             extra={'request_info': request_info}
@@ -200,21 +156,24 @@ def log_request_response(response):
         global _request_start_time
         processing_time = (time.time() - _request_start_time) * 1000 if _request_start_time else None
         
-        # Фильтрация заголовков
-        filtered_headers = _filter_sensitive_data(dict(request.headers))
+        # Фильтрация заголовков запроса
+        filtered_request_headers = _filter_sensitive_data(dict(request.headers))
+        
+        # Фильтрация заголовков ответа
+        filtered_response_headers = _filter_sensitive_data(dict(response.headers))
         
         # Формирование базовой информации
         response_info = {
             'timestamp': datetime.utcnow().isoformat(),
+            'type': 'OUTGOING_RESPONSE',
             'method': request.method,
             'path': request.path,
             'status_code': response.status_code,
             'processing_time_ms': round(processing_time, 2) if processing_time else None,
             'remote_addr': request.remote_addr,
-            'headers': filtered_headers,
-            'headers_count': len(request.headers),
+            'request_headers': filtered_request_headers,
+            'response_headers': filtered_response_headers,
             'query_params': dict(request.args),
-            'query_params_count': len(request.args),
             'response_content_type': response.content_type,
             'response_content_length': response.content_length,
         }
@@ -249,3 +208,101 @@ def log_request_response(response):
         logger.error(f"Ошибка логирования ответа: {str(e)}", exc_info=True)
     
     return response
+
+def log_outgoing_request(method: str, url: str, headers: Dict[str, str], body: Optional[Any] = None):
+    """
+    Логирование исходящего HTTP запроса (например, при вызове внешних API)
+    
+    Параметры:
+        method (str): HTTP метод
+        url (str): URL назначения
+        headers (Dict[str, str]): Заголовки запроса
+        body (Optional[Any]): Тело запроса
+    """
+    try:
+        filtered_headers = _filter_sensitive_data(headers)
+        
+        request_info = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'type': 'OUTGOING_REQUEST',
+            'method': method.upper(),
+            'url': url,
+            'headers': filtered_headers,
+        }
+        
+        if body:
+            # Попытка распарсить JSON тело
+            if isinstance(body, dict):
+                request_info['body'] = body
+            elif isinstance(body, str):
+                try:
+                    request_info['body'] = json.loads(body)
+                except:
+                    request_info['body'] = {'raw_body': body[:1000]}
+            else:
+                request_info['body'] = {'body_type': str(type(body))}
+        
+        logger.info(
+            f"Исходящий запрос:\n{json.dumps(request_info, indent=2, ensure_ascii=False)}",
+            extra={'outgoing_request': request_info}
+        )
+        
+    except Exception as e:
+        logger.error(f"Ошибка логирования исходящего запроса: {str(e)}", exc_info=True)
+
+def log_outgoing_response(url: str, status_code: int, headers: Dict[str, str], body: Optional[Any] = None, duration_ms: Optional[float] = None):
+    """
+    Логирование ответа на исходящий запрос
+    
+    Параметры:
+        url (str): URL назначения
+        status_code (int): HTTP статус ответа
+        headers (Dict[str, str]): Заголовки ответа
+        body (Optional[Any]): Тело ответа
+        duration_ms (Optional[float]): Длительность запроса в миллисекундах
+    """
+    try:
+        filtered_headers = _filter_sensitive_data(headers)
+        
+        response_info = {
+            'timestamp': datetime.utcnow().isoformat(),
+            'type': 'OUTGOING_RESPONSE',
+            'url': url,
+            'status_code': status_code,
+            'headers': filtered_headers,
+        }
+        
+        if duration_ms is not None:
+            response_info['duration_ms'] = round(duration_ms, 2)
+        
+        if body:
+            # Попытка распарсить JSON тело
+            if isinstance(body, dict):
+                response_info['body'] = body
+            elif isinstance(body, str):
+                try:
+                    response_info['body'] = json.loads(body)
+                except:
+                    response_info['body'] = {'raw_body': body[:1000]}
+            else:
+                response_info['body'] = {'body_type': str(type(body))}
+        
+        # Логирование в зависимости от статуса
+        if status_code >= 500:
+            logger.error(
+                f"Ошибка сервера при исходящем запросе:\n{json.dumps(response_info, indent=2, ensure_ascii=False)}",
+                extra={'outgoing_response': response_info}
+            )
+        elif status_code >= 400:
+            logger.warning(
+                f"Ошибка клиента при исходящем запросе:\n{json.dumps(response_info, indent=2, ensure_ascii=False)}",
+                extra={'outgoing_response': response_info}
+            )
+        else:
+            logger.info(
+                f"Успешный ответ на исходящий запрос:\n{json.dumps(response_info, indent=2, ensure_ascii=False)}",
+                extra={'outgoing_response': response_info}
+            )
+            
+    except Exception as e:
+        logger.error(f"Ошибка логирования ответа на исходящий запрос: {str(e)}", exc_info=True)
