@@ -3,7 +3,8 @@
 
 from flask import Flask
 import threading
-
+# ИМПОРТ МОДУЛЯ ДЛЯ ГЛОБАЛЬНОЙ ИНЪЕКЦИИ MODULE-ID
+import maintenance.outgoing_requests 
 from gate.gate import init_gate
 from maintenance.logging_config import setup_logging
 from maintenance.config_read import get_config_reader 
