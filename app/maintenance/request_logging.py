@@ -38,6 +38,39 @@ def _filter_sensitive_data(headers: Dict[str, str]) -> Dict[str, str]:
     logger.debug(f"Заголовки после фильтрации: {filtered}")
     return filtered
 
+def _log_raw_headers():
+    """
+    Детальное логирование всех заголовков входящего запроса до фильтрации
+    """
+    try:
+        raw_headers = dict(request.headers)
+        logger.debug("=== ВСЕ ЗАГОЛОВКИ ЗАПРОСА (до фильтрации) ===")
+        for key, value in raw_headers.items():
+            # Маскируем чувствительные данные даже в raw-логировании
+            if any(sensitive in key.lower() for sensitive in ['authorization', 'cookie', 'token', 'set-cookie', 'x-api-key']):
+                logger.debug(f"  {key}: ***FILTERED***")
+            else:
+                logger.debug(f"  {key}: {value}")
+        logger.debug("=== КОНЕЦ ЗАГОЛОВКОВ ЗАПРОСА ===")
+        
+        # Дополнительная статистика по заголовкам
+        logger.debug(f"Статистика заголовков: всего {len(raw_headers)} заголовков")
+        
+        # Группировка заголовков по категориям
+        auth_headers = [k for k in raw_headers.keys() if 'auth' in k.lower()]
+        cache_headers = [k for k in raw_headers.keys() if 'cache' in k.lower()]
+        content_headers = [k for k in raw_headers.keys() if 'content-' in k.lower()]
+        
+        if auth_headers:
+            logger.debug(f"Заголовки аутентификации: {auth_headers}")
+        if cache_headers:
+            logger.debug(f"Кэш-заголовки: {cache_headers}")
+        if content_headers:
+            logger.debug(f"Content-заголовки: {content_headers}")
+            
+    except Exception as e:
+        logger.error(f"Ошибка при логировании сырых заголовков: {str(e)}", exc_info=True)
+
 def _get_request_body() -> Optional[Dict[str, Any]]:
     """
     Безопасное извлечение тела запроса с детальным логированием
@@ -110,6 +143,9 @@ def log_request_info():
     _request_start_time = time.time()
     
     try:
+        # Логирование сырых заголовков
+        _log_raw_headers()
+        
         # Фильтрация заголовков
         filtered_headers = _filter_sensitive_data(dict(request.headers))
         
@@ -122,7 +158,9 @@ def log_request_info():
             'remote_addr': request.remote_addr,
             'user_agent': request.user_agent.string,
             'headers': filtered_headers,
+            'headers_count': len(request.headers),
             'query_params': dict(request.args),
+            'query_params_count': len(request.args),
             'content_type': request.content_type,
             'content_length': request.content_length,
         }
@@ -131,6 +169,14 @@ def log_request_info():
         request_body = _get_request_body()
         if request_body:
             request_info['request_body'] = request_body
+        
+        # Дополнительная информация о заголовках
+        if 'host' in request.headers:
+            request_info['host'] = request.headers.get('host')
+        if 'origin' in request.headers:
+            request_info['origin'] = request.headers.get('origin')
+        if 'referer' in request.headers:
+            request_info['referer'] = request.headers.get('referer')
         
         logger.info(
             f"Входящий запрос:\n{json.dumps(request_info, indent=2, ensure_ascii=False)}",
@@ -166,7 +212,9 @@ def log_request_response(response):
             'processing_time_ms': round(processing_time, 2) if processing_time else None,
             'remote_addr': request.remote_addr,
             'headers': filtered_headers,
+            'headers_count': len(request.headers),
             'query_params': dict(request.args),
+            'query_params_count': len(request.args),
             'response_content_type': response.content_type,
             'response_content_length': response.content_length,
         }
