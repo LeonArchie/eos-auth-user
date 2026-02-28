@@ -12,7 +12,8 @@ import yaml
 import json
 import logging
 import time
-from typing import Dict, Any, Optional, List, Pattern
+import uuid
+from typing import Dict, Any, Optional, List, Pattern, Union
 from pathlib import Path
 from flask import request, current_app, g
 
@@ -100,8 +101,9 @@ def load_schemas() -> List[Dict[str, Any]]:
                     normalized_rule = normalize_rule(rule['rule'])
                     rule_name = rule.get('name', f'unnamed_{idx}')
                     normalized_rule['name'] = rule_name
+                    normalized_rule['rqid'] = rule.get('rule', {}).get('rqid', False)
                     normalized_rules.append(normalized_rule)
-                    logger.debug(f"Нормализовано правило '{rule_name}': path='{normalized_rule.get('path')}', method={normalized_rule.get('method')}")
+                    logger.debug(f"Нормализовано правило '{rule_name}': path='{normalized_rule.get('path')}', method={normalized_rule.get('method')}, rqid={normalized_rule.get('rqid')}")
                 except Exception as e:
                     logger.warning(f"Ошибка нормализации правила #{idx}: {e}")
                     skipped_rules += 1
@@ -151,7 +153,7 @@ def normalize_rule(rule: Any) -> Dict:
         'body': rule.get('body', []) or []         # Если None, то пустой список
     }
     
-    # Нормализуем заголовки
+    # Нормализуем заголовки - оставляем как есть для строгой проверки
     headers = []
     for header in normalized['headers']:
         if isinstance(header, dict):
@@ -242,39 +244,112 @@ def validate_method(allowed_method: Optional[str], request_method: str) -> bool:
     return result
 
 
-def validate_headers(expected_headers: List[Dict], request_headers) -> bool:
+def validate_rqid(expected_rqid: bool, request_headers) -> bool:
     """
-    Проверяет заголовки запроса.
+    Проверяет наличие и корректность заголовка Rqid.
     
-    :param expected_headers: Список ожидаемых заголовков
+    :param expected_rqid: Флаг необходимости проверки Rqid
     :param request_headers: Заголовки запроса
-    :return: True если все заголовки присутствуют и соответствуют значениям
+    :return: True если проверка пройдена или не требуется
+    """
+    if not expected_rqid:
+        logger.debug("Проверка Rqid не требуется")
+        return True
+    
+    logger.debug("Проверка наличия Rqid заголовка")
+    
+    # Проверяем наличие заголовка Rqid (регистронезависимо)
+    rqid_header = None
+    for header_name in request_headers.keys():
+        if header_name.lower() == 'rqid':
+            rqid_header = header_name
+            break
+    
+    if not rqid_header:
+        logger.warning("Отсутствует обязательный заголовок Rqid")
+        return False
+    
+    rqid_value = request_headers.get(rqid_header, '')
+    logger.debug(f"Найден заголовок Rqid со значением: {rqid_value}")
+    
+    # Проверяем формат UUID
+    try:
+        # Пытаемся преобразовать в UUID
+        uuid_obj = uuid.UUID(rqid_value)
+        # Проверяем, что это строка в формате UUID (с дефисами или без)
+        # uuid.UUID принимает оба варианта, поэтому дополнительная проверка не требуется
+        logger.debug(f"Rqid имеет корректный формат UUID: {uuid_obj}")
+        return True
+    except (ValueError, AttributeError, TypeError) as e:
+        logger.warning(f"Rqid имеет некорректный формат UUID: {rqid_value}, ошибка: {e}")
+        return False
+
+
+def validate_headers_exact(expected_headers: List[Dict], request_headers) -> bool:
+    """
+    Строгая проверка заголовков запроса.
+    Должен быть ровно один заголовок с правильной парой name:value.
+    Если нет name или value у name - запрос отклоняется.
+    
+    :param expected_headers: Список ожидаемых заголовков (каждый с name и value)
+    :param request_headers: Заголовки запроса
+    :return: True если есть ровно одно совпадение
     """
     if not expected_headers:
         logger.debug("Проверка заголовков не требуется")
         return True
     
-    logger.debug(f"Проверка {len(expected_headers)} обязательных заголовков")
+    logger.debug(f"Строгая проверка заголовков: {expected_headers}")
     
+    # Собираем все ожидаемые пары name:value
+    expected_pairs = {}
     for header in expected_headers:
-        header_name = header.get('name', '')
-        expected_value = header.get('value', '')
+        name = header.get('name', '').lower()
+        value = header.get('value', '')
         
-        # Проверяем наличие заголовка
-        if header_name not in request_headers:
-            logger.warning(f"Отсутствует обязательный заголовок: {header_name}")
+        if not name or not value:
+            logger.warning(f"Некорректное правило заголовка: name='{name}', value='{value}'")
             return False
         
-        # Если указано ожидаемое значение, проверяем его
-        if expected_value:
-            actual_value = request_headers.get(header_name, '')
-            if actual_value != expected_value:
-                logger.warning(f"Заголовок {header_name} имеет значение '{actual_value}', ожидалось '{expected_value}'")
-                return False
-            else:
-                logger.debug(f"Заголовок {header_name} корректен")
+        if name not in expected_pairs:
+            expected_pairs[name] = []
+        expected_pairs[name].append(value)
     
-    logger.debug("Все заголовки прошли проверку")
+    # Проверяем все заголовки в запросе
+    found_match = False
+    matched_pair = None
+    
+    # Сначала проверяем, нет ли лишних заголовков из списка ожидаемых
+    # (заголовки не из списка ожидаемых игнорируются)
+    for header_name in request_headers.keys():
+        header_name_lower = header_name.lower()
+        
+        # Проверяем только те заголовки, которые есть в ожидаемых
+        if header_name_lower in expected_pairs:
+            actual_value = request_headers.get(header_name)
+            expected_values = expected_pairs[header_name_lower]
+            
+            # Проверяем значение
+            if actual_value in expected_values:
+                if found_match:
+                    # Нашли второе совпадение - ошибка
+                    logger.warning(f"Найдено второе совпадение: заголовок {header_name}={actual_value} (первое было {matched_pair})")
+                    return False
+                
+                # Первое совпадение
+                found_match = True
+                matched_pair = f"{header_name}={actual_value}"
+                logger.debug(f"Найдено совпадение: {matched_pair}")
+            else:
+                logger.warning(f"Заголовок {header_name} имеет неверное значение: '{actual_value}', ожидалось одно из: {expected_values}")
+                return False
+    
+    # Проверяем результат
+    if not found_match:
+        logger.warning(f"Не найдено ни одного подходящего заголовка из ожидаемых: {expected_pairs}")
+        return False
+    
+    logger.info(f"Успешная проверка заголовков: найден ровно один подходящий заголовок {matched_pair}")
     return True
 
 
@@ -436,9 +511,14 @@ def gate_middleware(app):
                 logger.warning(f" Запрос отклонен: неверный метод {request.method} для {request_path} (ожидался {rule.get('method')})")
                 return "", 403
             
-            # Проверяем заголовки
-            if not validate_headers(rule.get('headers', []), request.headers):
-                logger.warning(f" Запрос отклонен: неверные заголовки для {request_path}")
+            # Строгая проверка заголовков - ровно одно совпадение
+            if not validate_headers_exact(rule.get('headers', []), request.headers):
+                logger.warning(f" Запрос отклонен: ошибка проверки заголовков для {request_path}")
+                return "", 403
+            
+            # Проверяем Rqid если требуется
+            if not validate_rqid(rule.get('rqid', False), request.headers):
+                logger.warning(f" Запрос отклонен: неверный или отсутствующий Rqid для {request_path}")
                 return "", 403
             
             # Получаем ожидаемую структуру тела
@@ -511,7 +591,8 @@ def init_gate(app):
                 method = rule.get('method', 'ANY')
                 path = rule.get('path', '')
                 name = rule.get('name', 'unnamed')
-                logger.info(f"  - {method:7} {path:30} [{name}]")
+                rqid = rule.get('rqid', False)
+                logger.info(f"  - {method:7} {path:30} [{name}] (rqid: {rqid})")
         
         # Добавляем middleware
         gate_middleware(app)
