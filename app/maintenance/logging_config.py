@@ -26,10 +26,6 @@ class StructuredFormatter(logging.Formatter):
             "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),  # Время в UTC в ISO-формате
             "level": record.levelname,      # Уровень логирования (INFO, WARNING и т.д.)
             "message": record.getMessage(),  # Текст сообщения
-            "logger": record.name,           # Имя логгера
-            "module": record.module,         # Имя модуля
-            "function": record.funcName,     # Имя функции
-            "line": record.lineno,           # Номер строки
         }
         
         # Если есть информация об исключении, добавляем её в лог

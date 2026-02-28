@@ -52,7 +52,7 @@ def load_schemas() -> List[Dict[str, Any]]:
     
     try:
         # Определяем путь к файлу схем
-        current_dir = Path(__file__).parent
+        current_dir = Path(__file__).parent.parent
         schema_path = current_dir / 'schemas.yaml'
         
         if not schema_path.exists():
