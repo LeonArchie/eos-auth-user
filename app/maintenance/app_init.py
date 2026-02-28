@@ -6,6 +6,7 @@ from flask import Flask
 
 from handlers.gate import init_gate 
 from handlers.module_id_injector import ModuleIDInjector
+from handlers.rqid_injector import RQIDInjector
 from handlers.incoming_logger import IncomingRequestLogger
 from handlers.outgoing_logger import OutgoingRequestLogger
 from maintenance.logging_config import setup_logging

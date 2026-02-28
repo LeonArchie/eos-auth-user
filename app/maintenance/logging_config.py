@@ -107,8 +107,6 @@ def setup_logging(config_file_path: Optional[str] = None):
     # Устанавливаем уровень логирования из конфигурации
     logger.setLevel(log_level)
     
-    print(f"Настройка логирования: уровень={log_level_str} ({log_level})")
-    
     # Создаем обработчик, который выводит логи в stdout
     # (рекомендуется для Docker/Kubernetes)
     handler = logging.StreamHandler(sys.stdout)
@@ -126,6 +124,4 @@ def setup_logging(config_file_path: Optional[str] = None):
     
     # Логируем успешную настройку логирования
     logger.debug(f"Система логирования настроена. Уровень: {log_level_str}")
-    logger.debug("Режим отладки активирован")
-
     return logger
