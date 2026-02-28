@@ -11,8 +11,8 @@ CREATE TABLE users (
 );
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER 
-ON TABLE users TO "DB_ADMIN";
-GRANT ALL PRIVILEGES ON users TO "DB_ADMIN";
+ON TABLE users TO "db_admin";
+GRANT ALL PRIVILEGES ON users TO "db_admin";
 
 
 -- Комментарии к таблице users
@@ -39,15 +39,15 @@ CREATE TABLE sessions (
 );
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER 
-ON TABLE sessions TO "DB_ADMIN";
-GRANT ALL PRIVILEGES ON sessions TO "DB_ADMIN";
+ON TABLE sessions TO "db_admin";
+GRANT ALL PRIVILEGES ON sessions TO "db_admin";
 
 
 -- Комментарии к таблице sessions
 COMMENT ON TABLE sessions IS 'Таблица для хранения активных сессий пользователей';
 COMMENT ON COLUMN sessions.session_id IS 'Уникальный идентификатор сессии в формате UUID (генерируется автоматически)';
 COMMENT ON COLUMN sessions.user_id IS 'Ссылка на пользователя в таблице users (каскадное удаление при удалении пользователя)';
-COMMENT ON COLUMN sessions.access_token IS 'JWT токен доступа (максимальная длина 500 символов)';
+COMMENT ON COLUMN sessions.access_token_hash IS 'JWT токен доступа (максимальная длина 500 символов)';
 COMMENT ON COLUMN sessions.refresh_token_hash IS 'Хэш токена обновления (SHA-256, 64 символа)';
 COMMENT ON COLUMN sessions.user_agent IS 'Информация о браузере/устройстве пользователя (максимальная длина 200 символов)';
 COMMENT ON COLUMN sessions.ip_address IS 'IP-адрес пользователя (поддерживает IPv6, максимальная длина 45 символов)';

@@ -65,7 +65,7 @@ BEGIN
         WHERE rolcanlogin = true 
         AND rolname NOT LIKE 'pg_%'
         AND rolname != 'postgres'
-        AND rolname != 'DB_ADMIN'
+        AND rolname != 'db_admin'
     ) INTO user_names;
     
     -- Предоставляем права на последовательность для всех пользователей
