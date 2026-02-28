@@ -146,9 +146,9 @@ def normalize_rule(rule: Any) -> Dict:
     """
     normalized = {
         'path': rule.get('path', ''),
-        'method': rule.get('method', '').upper() if rule.get('method') else None,  # None если метод не указан
-        'headers': rule.get('headers', []),
-        'body': rule.get('body', [])
+        'method': rule.get('method', '').upper() if rule.get('method') else None,
+        'headers': rule.get('headers', []) or [],  # Если None, то пустой список
+        'body': rule.get('body', []) or []         # Если None, то пустой список
     }
     
     # Нормализуем заголовки
