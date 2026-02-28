@@ -494,9 +494,7 @@ def init_gate(app):
     """
     global _gate_healthy, _gate_init_error
     
-    logger.info("=" * 50)
     logger.info("Инициализация сервиса-шлюза (gate)")
-    logger.info("=" * 50)
     
     try:
         # Пробуем загрузить схемы при старте
@@ -517,9 +515,7 @@ def init_gate(app):
         
         # Добавляем middleware
         gate_middleware(app)
-        
-        logger.info(" Сервис-шлюз успешно инициализирован")
-        logger.info("=" * 50)
+        logger.info(" Сервис-шлюз успешно инициализирован")      
         
     except GateValidationError as e:
         logger.error(f" Критическая ошибка инициализации шлюза: {e}")
@@ -528,14 +524,13 @@ def init_gate(app):
         # Добавляем middleware даже при ошибке, чтобы он отклонял запросы
         gate_middleware(app)
         logger.warning(" Шлюз инициализирован в аварийном режиме - все запросы будут отклоняться с кодом 504")
-        logger.info("=" * 50)
+        
     except Exception as e:
         logger.error(f" Неожиданная ошибка инициализации шлюза: {str(e)}", exc_info=True)
         _gate_healthy = False
         _gate_init_error = str(e)
         gate_middleware(app)
         logger.warning(" Шлюз инициализирован в аварийном режиме - все запросы будут отклоняться с кодом 504")
-        logger.info("=" * 50)
     
     return app
 

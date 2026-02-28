@@ -12,7 +12,6 @@ from typing import Optional
 class StructuredFormatter(logging.Formatter):
     """
     Кастомный форматтер для структурированных логов в формате JSON.
-    Наследуется от базового класса logging.Formatter.
     """
     def format(self, record):
         """
@@ -126,7 +125,7 @@ def setup_logging(config_file_path: Optional[str] = None):
     logger.addHandler(handler)
     
     # Логируем успешную настройку логирования
-    logger.info(f"Система логирования настроена. Уровень: {log_level_str}")
+    logger.debug(f"Система логирования настроена. Уровень: {log_level_str}")
     logger.debug("Режим отладки активирован")
 
     return logger
