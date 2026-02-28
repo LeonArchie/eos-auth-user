@@ -103,7 +103,7 @@ def load_schemas() -> List[Dict[str, Any]]:
                     normalized_rule['name'] = rule_name
                     normalized_rule['rqid'] = rule.get('rule', {}).get('rqid', False)
                     normalized_rules.append(normalized_rule)
-                    logger.debug(f"Нормализовано правило '{rule_name}': path='{normalized_rule.get('path')}', method={normalized_rule.get('method')}, rqid={normalized_rule.get('rqid')}")
+                    logger.debug(f"Нормализовано правило '{rule_name}': path='{normalized_rule.get('path')}', method={normalized_rule.get('method')}, rqid={normalized_rule.get('rqid')}, body_type={type(normalized_rule.get('body')).__name__}")
                 except Exception as e:
                     logger.warning(f"Ошибка нормализации правила #{idx}: {e}")
                     skipped_rules += 1
@@ -163,13 +163,36 @@ def normalize_rule(rule: Any) -> Dict:
             })
     normalized['headers'] = headers
     
-    # Нормализуем тело запроса
-    body_fields = {}
-    for field in normalized['body']:
-        if isinstance(field, dict):
-            for field_name, pattern in field.items():
-                body_fields[field_name] = pattern
-    normalized['body'] = body_fields
+    # Нормализуем тело запроса с учетом новых правил
+    body = normalized['body']
+    
+    # Случай 1: '*' - разрешено любое тело
+    if isinstance(body, str) and body == '*':
+        normalized['body'] = '*'
+        logger.debug("Обнаружен wildcard '*' для тела запроса")
+    
+    # Случай 2: пустой список или пустое значение - тела быть не должно
+    elif not body or (isinstance(body, list) and len(body) == 0):
+        normalized['body'] = {}  # Пустой словарь = тело не ожидается
+        logger.debug("Обнаружено пустое тело запроса (тело не ожидается)")
+    
+    # Случай 3: список полей для валидации
+    elif isinstance(body, list):
+        body_fields = {}
+        for field in body:
+            if isinstance(field, dict):
+                for field_name, pattern in field.items():
+                    body_fields[field_name] = pattern
+            elif isinstance(field, str):
+                # Поддержка простых строковых полей (для обратной совместимости)
+                body_fields[field] = '.*'
+        normalized['body'] = body_fields
+        logger.debug(f"Нормализовано тело запроса с {len(body_fields)} полями")
+    
+    # Случай 4: что-то другое - считаем невалидным (но оставляем как есть для обработки ошибок позже)
+    else:
+        logger.warning(f"Неизвестный формат тела запроса: {type(body)}")
+        normalized['body'] = body
     
     return normalized
 
@@ -382,58 +405,69 @@ def validate_field(value: Any, pattern: str) -> bool:
         return False
 
 
-def validate_body_structure(expected_body: Dict, actual_body: Dict) -> bool:
+def validate_body_structure(expected_body: Union[Dict, str], actual_body: Dict) -> bool:
     """
-    Проверяет структуру тела запроса.
-    - Все ожидаемые поля должны присутствовать
-    - Не должно быть лишних полей
-    - Каждое поле должно соответствовать паттерну
+    Проверяет структуру тела запроса с учетом новых правил:
+    - Если expected_body == '*': разрешено любое тело (проверка пропускается)
+    - Если expected_body == {}: тело не должно быть передано
+    - Если expected_body - словарь с полями: строгая проверка всех полей
     
-    :param expected_body: Ожидаемая структура тела
+    :param expected_body: Ожидаемая структура тела (словарь с полями, пустой словарь или '*')
     :param actual_body: Фактическое тело запроса
     :return: True если структура соответствует
     """
-    # Если тело не ожидается, проверяем что тело пустое
-    if not expected_body:
+    # Случай 1: '*' - разрешено любое тело
+    if expected_body == '*':
+        logger.debug("Wildcard '*' обнаружен: любое тело разрешено")
+        return True
+    
+    # Случай 2: пустой словарь - тело не ожидается
+    if expected_body == {}:
         if actual_body:
             logger.warning(f"Тело не ожидается, но получены данные: {list(actual_body.keys())}")
             return False
         logger.debug("Тело не ожидается и не получено - OK")
         return True
     
-    # Проверяем наличие всех обязательных полей и отсутствие лишних
-    expected_fields = set(expected_body.keys())
-    actual_fields = set(actual_body.keys())
-    
-    # Если поля не совпадают - ошибка
-    if expected_fields != actual_fields:
-        missing = expected_fields - actual_fields
-        extra = actual_fields - expected_fields
+    # Случай 3: словарь с полями - строгая проверка
+    if isinstance(expected_body, dict):
+        # Проверяем наличие всех обязательных полей и отсутствие лишних
+        expected_fields = set(expected_body.keys())
+        actual_fields = set(actual_body.keys())
         
-        if missing:
-            logger.warning(f"Отсутствуют поля: {missing}")
-        if extra:
-            logger.warning(f"Лишние поля: {extra}")
-        
-        logger.debug(f"Несовпадение полей: ожидаемые {expected_fields}, полученные {actual_fields}")
-        return False
-    
-    logger.debug(f"Проверка {len(expected_body)} полей тела запроса")
-    
-    # Проверяем каждое поле на соответствие паттерну
-    for field_name, pattern in expected_body.items():
-        if field_name not in actual_body:
-            logger.warning(f"Отсутствует поле: {field_name}")
+        # Если поля не совпадают - ошибка
+        if expected_fields != actual_fields:
+            missing = expected_fields - actual_fields
+            extra = actual_fields - expected_fields
+            
+            if missing:
+                logger.warning(f"Отсутствуют поля: {missing}")
+            if extra:
+                logger.warning(f"Лишние поля: {extra}")
+            
+            logger.debug(f"Несовпадение полей: ожидаемые {expected_fields}, полученные {actual_fields}")
             return False
         
-        if not validate_field(actual_body[field_name], pattern):
-            logger.warning(f"Поле {field_name} не соответствует паттерну {pattern}")
-            return False
+        logger.debug(f"Проверка {len(expected_body)} полей тела запроса")
         
-        logger.debug(f"Поле {field_name} прошло проверку")
+        # Проверяем каждое поле на соответствие паттерну
+        for field_name, pattern in expected_body.items():
+            if field_name not in actual_body:
+                logger.warning(f"Отсутствует поле: {field_name}")
+                return False
+            
+            if not validate_field(actual_body[field_name], pattern):
+                logger.warning(f"Поле {field_name} не соответствует паттерну {pattern}")
+                return False
+            
+            logger.debug(f"Поле {field_name} прошло проверку")
+        
+        logger.debug("Все поля тела запроса прошли проверку")
+        return True
     
-    logger.debug("Все поля тела запроса прошли проверку")
-    return True
+    # Неизвестный формат expected_body
+    logger.error(f"Неизвестный формат expected_body: {type(expected_body)}")
+    return False
 
 
 def extract_request_body() -> Dict:
@@ -530,7 +564,12 @@ def gate_middleware(app):
             # Проверяем структуру тела
             if not validate_body_structure(expected_body, actual_body):
                 logger.warning(f" Запрос отклонен: неверная структура тела для {request_path}")
-                logger.debug(f"Ожидалось: {expected_body}, получено: {list(actual_body.keys()) if actual_body else {}}")
+                if expected_body == '*':
+                    logger.debug("Ожидался wildcard '*', но тело не прошло проверку (это сообщение не должно появляться)")
+                elif expected_body == {}:
+                    logger.debug(f"Ожидалось пустое тело, получено: {list(actual_body.keys()) if actual_body else {}}")
+                else:
+                    logger.debug(f"Ожидалось: {expected_body}, получено: {list(actual_body.keys()) if actual_body else {}}")
                 return "", 403
             
             # Если все проверки пройдены, добавляем информацию в контекст
@@ -592,7 +631,16 @@ def init_gate(app):
                 path = rule.get('path', '')
                 name = rule.get('name', 'unnamed')
                 rqid = rule.get('rqid', False)
-                logger.info(f"  - {method:7} {path:30} [{name}] (rqid: {rqid})")
+                body_type = type(rule.get('body')).__name__
+                if rule.get('body') == '*':
+                    body_desc = "wildcard '*'"
+                elif rule.get('body') == {}:
+                    body_desc = "no body"
+                elif isinstance(rule.get('body'), dict):
+                    body_desc = f"{len(rule.get('body', {}))} fields"
+                else:
+                    body_desc = str(rule.get('body'))
+                logger.info(f"  - {method:7} {path:30} [{name}] (rqid: {rqid}, body: {body_desc})")
         
         # Добавляем middleware
         gate_middleware(app)
