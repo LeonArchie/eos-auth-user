@@ -76,7 +76,6 @@ def extract_signature_headers(sql_content: str) -> Tuple[Dict[str, str], str]:
 def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
     """
     Проверяет подпись SQL-скрипта миграции.
-    Возвращает True если подпись действительна, иначе выбрасывает исключение.
     """
     global verified_migrations_cache
     
@@ -101,6 +100,7 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
         
         # Проверяем контрольную сумму
         if 'CHECKSUM' in headers:
+            # Используем clean_content для проверки контрольной суммы
             calculated_checksum = hashlib.sha256(clean_content.encode('utf-8')).hexdigest()
             if calculated_checksum != headers['CHECKSUM']:
                 raise SignatureError(
@@ -132,7 +132,7 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
                 migration_file
             )
         
-        # Проверяем тип ключа (ожидаем ECDSA)
+        # Проверяем тип ключа
         if not isinstance(public_key, ec.EllipticCurvePublicKey):
             raise SignatureError(
                 f"Неподдерживаемый тип ключа. Ожидался ECDSA, получен {type(public_key).__name__}",
@@ -148,9 +148,9 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
                 migration_file
             )
         
-        # Подготавливаем данные для проверки подписи
-        # Используем содержимое без заголовков + информацию о подписанте
-        verification_data = f"{clean_content}\n-- SIGNED_BY: {signed_by}\n-- SIGNED_AT: {headers['SIGNED_AT']}".encode('utf-8')
+        # ИСПРАВЛЕНИЕ: Используем clean_content (без заголовков) для проверки подписи
+        # так как заголовки были удалены при создании подписи
+        verification_data = clean_content.encode('utf-8')
         
         # Проверяем подпись
         try:
