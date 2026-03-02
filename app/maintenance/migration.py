@@ -860,6 +860,7 @@ def run_migrations(session) -> List[str]:
     
     total_start = time.time()
     applied_migrations = []
+    error_occurred = False
     
     try:
         # Ожидаем готовности базы данных
@@ -867,7 +868,7 @@ def run_migrations(session) -> List[str]:
         if not wait_for_db_flag(max_attempts=30, delay=2.0):
             error_msg = "База данных недоступна после множества попыток, миграции не могут быть выполнены"
             _log_migration_step("Критическая ошибка", error_msg, "critical")
-            set_migration_flag(0)
+            error_occurred = True
             raise MigrationError(error_msg)
         
         logger.info("База данных готова, запуск миграций")
@@ -924,10 +925,7 @@ def run_migrations(session) -> List[str]:
                 remaining_pending = len(pending) - len(applied_migrations)
                 _update_migration_cache(complete=False, has_errors=True, pending_count=remaining_pending)
                 
-                # Устанавливаем флаг "ошибка"
-                logger.info("Установка флага FLAG_MIGRATION_COMPLETE = 0 (ошибка)")
-                set_migration_flag(0)
-                
+                error_occurred = True
                 raise MigrationError(error_msg, migration_file)
         
         # Если все миграции успешно применены
@@ -959,12 +957,29 @@ def run_migrations(session) -> List[str]:
             "critical"
         )
         
-        # Устанавливаем флаг "ошибка" если еще не установлен
-        if get_migration_flag() != 0:
+        # ВАЖНО: Устанавливаем флаг "ошибка" в любом случае при возникновении исключения
+        # Проверяем, не был ли флаг уже установлен в 0
+        current_flag = get_migration_flag()
+        if current_flag != 0:
             logger.info("Установка флага FLAG_MIGRATION_COMPLETE = 0 (ошибка)")
-            set_migration_flag(0)
+            try:
+                set_migration_flag(0)
+            except Exception as flag_error:
+                logger.error(f"Не удалось установить флаг ошибки: {flag_error}")
         
+        # Пробрасываем исключение дальше
         raise MigrationError(f"Процесс миграций завершен с ошибкой: {str(e)}") from e
+    
+    finally:
+        # Дополнительная страховка: если произошла ошибка, но флаг не 0, устанавливаем его в 0
+        if error_occurred:
+            try:
+                final_flag = get_migration_flag()
+                if final_flag != 0:
+                    logger.warning(f"Обнаружена ошибка, но флаг = {final_flag}. Принудительная установка FLAG_MIGRATION_COMPLETE = 0")
+                    set_migration_flag(0)
+            except Exception as final_flag_error:
+                logger.error(f"Не удалось установить флаг ошибки в finally блоке: {final_flag_error}")
 
 @with_db_session
 def check_migrations_status(session) -> Tuple[bool, str, List[str]]:

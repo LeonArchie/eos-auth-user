@@ -3,7 +3,7 @@
 """
 
 DEVELOPER_KEYS = {
-    "Lev Petunin <lev@example.com>": """
+    "Lev Petunin <lm.petunin@sign-sql.ru>": """
 -----BEGIN PUBLIC KEY-----
 MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/WwJK1Wx56u6qQUg0hmTPart8RPd
 Sttp4apbgiu7HansWHURD1QjDPJJnOcgHvOUnkgNcZWs3Atf6RvjefSXvw==
