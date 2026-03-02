@@ -44,7 +44,7 @@ def get_global_config(parameter_path: str) -> str:
             return SERVER_ERROR
     
     # Валидируем входную строку
-    if not valid_regular_expressions(parameter_path, r'^[a-z0-9/]*$'):
+    if not valid_regular_expressions(parameter_path, r'^[a-z0-9/_]*$'):
         logger.warning(f"Запрос {parameter_path} не соответствует регулярному выражению")
         return VALID_ERROR
     
