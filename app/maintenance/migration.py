@@ -76,6 +76,7 @@ def extract_signature_headers(sql_content: str) -> Tuple[Dict[str, str], str]:
 def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
     """
     Проверяет подпись SQL-скрипта миграции.
+    Возвращает True если подпись действительна, иначе выбрасывает исключение.
     """
     global verified_migrations_cache
     
@@ -100,7 +101,6 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
         
         # Проверяем контрольную сумму
         if 'CHECKSUM' in headers:
-            # Используем clean_content для проверки контрольной суммы
             calculated_checksum = hashlib.sha256(clean_content.encode('utf-8')).hexdigest()
             if calculated_checksum != headers['CHECKSUM']:
                 raise SignatureError(
@@ -132,7 +132,7 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
                 migration_file
             )
         
-        # Проверяем тип ключа
+        # Проверяем тип ключа (ожидаем ECDSA)
         if not isinstance(public_key, ec.EllipticCurvePublicKey):
             raise SignatureError(
                 f"Неподдерживаемый тип ключа. Ожидался ECDSA, получен {type(public_key).__name__}",
@@ -147,6 +147,37 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
                 f"Ошибка декодирования подписи: {str(e)}",
                 migration_file
             )
+        
+        # ИСПРАВЛЕНИЕ: Используем clean_content (без заголовков) для проверки подписи
+        # Заголовки уже были удалены, не нужно добавлять их обратно
+        verification_data = clean_content.encode('utf-8')
+        
+        # Проверяем подпись
+        try:
+            public_key.verify(
+                signature,
+                verification_data,
+                ec.ECDSA(hashes.SHA256())
+            )
+            logger.info(f"✓ Подпись миграции {migration_file} действительна (подписано: {signed_by})")
+            
+            # Добавляем в кэш проверенных миграций
+            verified_migrations_cache.add(migration_file)
+            return True
+            
+        except InvalidSignature:
+            raise SignatureError(
+                f"Недействительная подпись для миграции {migration_file}",
+                migration_file
+            )
+            
+    except SignatureError:
+        raise
+    except Exception as e:
+        raise SignatureError(
+            f"Неожиданная ошибка при проверке подписи: {str(e)}",
+            migration_file
+        )
         
         # ИСПРАВЛЕНИЕ: Используем clean_content (без заголовков) для проверки подписи
         # так как заголовки были удалены при создании подписи
