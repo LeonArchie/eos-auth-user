@@ -5,8 +5,8 @@ import os
 import json
 import logging
 import time
+import sys
 from typing import Optional, Iterator, Dict, Any
-from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
@@ -24,12 +24,11 @@ from sqlalchemy.exc import (
 )
 from contextlib import contextmanager
 
-# Загрузка переменных окружения из .env файла
-dotenv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
-load_dotenv(dotenv_path)
-
-# Импорт ConfigReader
-from maintenance.config_read import get_config_reader, read_config_param
+# Импорт модулей конфигурации
+from maintenance.configurations.get_env_config import get_env_config
+from maintenance.configurations.get_global_config import get_global_config, SERVER_ERROR, DATA_ERROR
+from maintenance.flag_state import get_flag_state, set_db_flag, get_global_flag
+from maintenance.wait_for_flag import wait_for_global_flag  # Импортируем новую функцию
 
 # Настройка логгера
 logger = logging.getLogger(__name__)
@@ -131,6 +130,9 @@ class DatabaseConnector:
         self._initialized = False
         self.config = {}
         
+        # Устанавливаем флаг БД в 0 при создании
+        set_db_flag(0)
+        
         logger.info("Инициализация DatabaseConnector")
     
     def _log_db_operation(self, operation: str, details: str = "", level: str = "info") -> None:
@@ -138,11 +140,10 @@ class DatabaseConnector:
         log_method = getattr(logger, level.lower(), logger.info)
         log_method(f"ЗАПРОС БД: {operation} {details}")
     
-    def _get_config_param_with_retry(self, file_name: str, param_path: str, max_retries: int = 10, retry_delay: float = 5.0) -> Any:
+    def _get_config_param_with_retry(self, param_path: str, max_retries: int = 10, retry_delay: float = 5.0) -> Any:
         """
-        Получение параметра конфигурации с повторными попытками.
+        Получение параметра конфигурации из глобального сервиса с повторными попытками.
         
-        :param file_name: имя файла конфигурации
         :param param_path: путь к параметру
         :param max_retries: максимальное количество попыток
         :param retry_delay: задержка между попытками в секундах
@@ -151,14 +152,15 @@ class DatabaseConnector:
         """
         for attempt in range(1, max_retries + 1):
             try:
-                value = read_config_param(file_name, param_path)
-                if value is not None:
+                value = get_global_config(param_path)
+                
+                if value not in [SERVER_ERROR, DATA_ERROR]:
                     logger.info(f"Параметр {param_path} успешно получен: {value}")
                     return value
                 else:
-                    logger.warning(f"Параметр {param_path} не найден (попытка {attempt}/{max_retries})")
+                    logger.warning(f"Ошибка получения параметра {param_path} (попытка {attempt}/{max_retries}): {value}")
             except Exception as e:
-                logger.warning(f"Ошибка получения параметра {param_path} (попытка {attempt}/{max_retries}): {str(e)}")
+                logger.warning(f"Исключение при получении параметра {param_path} (попытка {attempt}/{max_retries}): {str(e)}")
             
             if attempt < max_retries:
                 logger.info(f"Повторная попытка получения параметра {param_path} через {retry_delay} сек")
@@ -169,33 +171,39 @@ class DatabaseConnector:
         raise RuntimeError(error_msg)
     
     def _load_configuration(self) -> None:
-        """Загрузка конфигурации из ConfigReader и .env файла с повторными попытками."""
+        """Загрузка конфигурации из глобального сервиса и .env файла с повторными попытками."""
         self._log_db_operation("Загрузка конфигурации БД")
         
         try:
-            # Загрузка конфигурации из ConfigReader с повторными попытками
+            # Проверяем флаг глобальной конфигурации перед загрузкой с помощью новой функции
+            if not wait_for_global_flag(max_attempts=10, delay=10.0):
+                error_msg = "Глобальный сервис конфигураций недоступен, невозможно загрузить параметры БД"
+                logger.error(error_msg)
+                raise RuntimeError(error_msg)
+            
+            # Загрузка конфигурации из глобального сервиса с повторными попытками
             config_params = {
-                'master_host': ('db', 'master_host'),
-                'master_port': ('db', 'master_port'),
-                'database': ('db', 'database'),
-                'pool_size': ('db', 'pool_size'),
-                'max_overflow': ('db', 'max_overflow'),
-                'pool_timeout': ('db', 'pool_timeout'),
-                'pool_recycle': ('db', 'pool_recycle'),
-                'pool_pre_ping': ('db', 'pool_pre_ping'),
-                'pool_use_lifo': ('db', 'pool_use_lifo'),
-                'max_retries': ('db', 'max_retries'),
-                'retry_delay': ('db', 'retry_delay')
+                'master_host': 'db/master_host',
+                'master_port': 'db/master_port',
+                'database': 'db/database',
+                'pool_size': 'db/pool_size',
+                'max_overflow': 'db/max_overflow',
+                'pool_timeout': 'db/pool_timeout',
+                'pool_recycle': 'db/pool_recycle',
+                'pool_pre_ping': 'db/pool_pre_ping',
+                'pool_use_lifo': 'db/pool_use_lifo',
+                'max_retries': 'db/max_retries',
+                'retry_delay': 'db/retry_delay'
             }
             
-            for key, (file_name, param_path) in config_params.items():
-                value = self._get_config_param_with_retry(file_name, param_path)
+            for key, param_path in config_params.items():
+                value = self._get_config_param_with_retry(param_path)
                 self.config[key] = value
                 logger.info(f"Конфигурация {key}: {value}")
             
-            # Загрузка учетных данных из .env
-            self.config['user'] = os.getenv('DATABASE_USER')
-            self.config['password'] = os.getenv('DB_PASSWORD')
+            # Загрузка учетных данных из .env через get_env_config
+            self.config['user'] = get_env_config('DATABASE_USER')
+            self.config['password'] = get_env_config('DB_PASSWORD')
             
             if not self.config['user']:
                 raise ValueError("Не найден DATABASE_USER в .env файле")
@@ -298,6 +306,9 @@ class DatabaseConnector:
             )
             
             self._initialized = True
+            # Устанавливаем флаг БД в 1 при успешной инициализации
+            set_db_flag(1)
+            
             init_time = (time.time() - start_time) * 1000
             self._log_db_operation(
                 "Инициализация БД завершена",
@@ -311,17 +322,24 @@ class DatabaseConnector:
             self._log_db_operation(
                 "Ошибка инициализации БД",
                 f"Время до ошибки: {init_time:.2f} мс\n"
-                f"Тип ошибки: {type(e).__name__}",
+                f"Тип ошибки: {type(e).__name__}\n"
+                f"Сообщение: {str(e)}",
                 "critical"
             )
+            # Устанавливаем флаг БД в 0 при ошибке инициализации
+            set_db_flag(0)
             if self.engine:
                 self.engine.dispose()
-            raise
+            
+            # Завершаем приложение с кодом ошибки 1
+            logger.critical("Критическая ошибка инициализации БД, завершение приложения с кодом 1")
+            sys.exit(1)
     
     def is_healthy(self) -> bool:
         """Проверка работоспособности базы данных."""
         if not self._initialized:
             logger.warning("Попытка проверки здоровья неинициализированной БД")
+            set_db_flag(0)
             return False
         
         try:
@@ -335,13 +353,16 @@ class DatabaseConnector:
                 
                 if health_check:
                     logger.info(f"Проверка здоровья БД успешна: {check_time:.2f} мс")
+                    set_db_flag(1)
                 else:
                     logger.warning(f"Проверка здоровья БД не прошла: {check_time:.2f} мс")
+                    set_db_flag(0)
                 
                 return health_check
                 
         except Exception as e:
             logger.error(f"Ошибка при проверке здоровья БД: {str(e)}")
+            set_db_flag(0)
             return False
     
     @contextmanager
@@ -350,6 +371,7 @@ class DatabaseConnector:
         if not self._initialized:
             error_msg = "Попытка создать сессию неинициализированной БД"
             logger.error(error_msg)
+            set_db_flag(0)
             raise RuntimeError(error_msg)
         
         session = self.SessionLocal()
@@ -365,6 +387,7 @@ class DatabaseConnector:
             
         except SQLAlchemyError as e:
             session.rollback()
+            set_db_flag(0)
             DatabaseErrorHandler.handle_error(e, {
                 'session_id': session_id,
                 'operation': 'session_commit'
@@ -372,6 +395,7 @@ class DatabaseConnector:
             
         except Exception as e:
             session.rollback()
+            set_db_flag(0)
             logger.error(
                 f"Неожиданная ошибка в сессии {session_id}: {str(e)}",
                 exc_info=True
@@ -392,6 +416,7 @@ class DatabaseConnector:
                 "Попытка закрыть несуществующий engine",
                 "warning"
             )
+            set_db_flag(0)
             return
         
         self._log_db_operation(
@@ -404,6 +429,7 @@ class DatabaseConnector:
         try:
             self.engine.dispose()
             self._initialized = False
+            set_db_flag(0)
             
             self._log_db_operation(
                 "Пул подключений закрыт",
@@ -415,11 +441,16 @@ class DatabaseConnector:
                 f"Тип: {type(e).__name__}\nСообщение: {str(e)}",
                 "error"
             )
+            set_db_flag(0)
             raise
     
     def is_initialized(self) -> bool:
         """Проверка инициализации подключения к БД."""
         return self._initialized
+    
+    def get_db_flag(self) -> int:
+        """Получение текущего значения флага БД."""
+        return get_flag_state().get_flag('FLAG_DB_ACTIVE')
 
 # Глобальный экземпляр для удобства использования
 _db_connector = None
@@ -441,7 +472,14 @@ def get_db_connector() -> DatabaseConnector:
 def initialize_database() -> None:
     """Инициализация базы данных."""
     connector = get_db_connector()
-    connector.initialize()
+    try:
+        connector.initialize()
+    except SystemExit as e:
+        # Пробрасываем SystemExit дальше
+        raise
+    except Exception as e:
+        logger.critical(f"Критическая ошибка инициализации БД: {e}")
+        sys.exit(1)
 
 def close_database() -> None:
     """Закрытие подключения к базе данных."""
@@ -457,6 +495,11 @@ def is_database_initialized() -> bool:
     """Проверка инициализации базы данных."""
     connector = get_db_connector()
     return connector.is_initialized()
+
+def get_database_flag() -> int:
+    """Получение флага состояния базы данных."""
+    connector = get_db_connector()
+    return connector.get_db_flag()
 
 def wait_for_database_connection(max_retries: int = 10, retry_delay: float = 5.0) -> bool:
     """
@@ -488,8 +531,12 @@ def wait_for_database_connection(max_retries: int = 10, retry_delay: float = 5.0
                 logger.info(f"Подключение к БД успешно установлено за {total_time:.2f} сек")
                 return True
                 
+        except SystemExit:
+            # Пробрасываем SystemExit дальше
+            raise
         except Exception as e:
             logger.warning(f"Ошибка подключения к БД (попытка {attempt}): {str(e)}")
+            set_db_flag(0)
             
             if attempt < max_retries:
                 # Экспоненциальная задержка
@@ -501,4 +548,5 @@ def wait_for_database_connection(max_retries: int = 10, retry_delay: float = 5.0
     
     total_time = time.time() - start_time
     logger.error(f"Не удалось подключиться к БД после {max_retries} попыток за {total_time:.2f} сек")
+    set_db_flag(0)
     return False

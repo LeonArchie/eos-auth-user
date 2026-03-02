@@ -64,7 +64,6 @@ def read_log_level_from_config(config_file_path: Optional[str] = None) -> str:
                 if line.startswith('LOG_LVL='):
                     log_level = line.split('=', 1)[1].strip()
                     
-                    # ИСПРАВЛЕНО: Добавлена проверка валидности уровня
                     valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
                     if log_level in valid_levels:
                         return log_level

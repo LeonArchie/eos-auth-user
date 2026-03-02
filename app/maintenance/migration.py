@@ -5,12 +5,22 @@ import os
 import re
 import hashlib
 import time
-from typing import Dict, List, Tuple, Optional, Callable, Any
+import base64
+from typing import Dict, List, Tuple, Optional, Callable, Any, Set
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 from pathlib import Path
 from functools import wraps
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.backends import default_backend
+
+from maintenance.flag_state import set_migration_flag, get_migration_flag, get_db_flag
+from maintenance.wait_for_flag import wait_for_db_flag
+from migrations.developers_keys import DEVELOPER_KEYS, verified_migrations_cache
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +45,171 @@ class MigrationError(Exception):
             exc_info=True
         )
         super().__init__(message)
+
+class SignatureError(MigrationError):
+    """Ошибка проверки подписи миграции"""
+    def __init__(self, message: str, migration_file: Optional[str] = None):
+        super().__init__(f"Ошибка подписи: {message}", migration_file)
+
+# ==================== ФУНКЦИИ ДЛЯ РАБОТЫ С ПОДПИСЯМИ ====================
+
+def extract_signature_headers(sql_content: str) -> Tuple[Dict[str, str], str]:
+    """
+    Извлекает заголовки подписи из SQL-скрипта.
+    Возвращает (заголовки, содержимое без заголовков)
+    """
+    headers = {}
+    lines = sql_content.splitlines()
+    content_lines = []
+    header_pattern = re.compile(r'^--\s*(SIGNATURE|SIGNED_BY|SIGNED_AT|CHECKSUM):\s*(.+)$')
+    
+    for line in lines:
+        match = header_pattern.match(line)
+        if match:
+            key, value = match.groups()
+            headers[key] = value.strip()
+        else:
+            content_lines.append(line)
+    
+    return headers, '\n'.join(content_lines)
+
+def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
+    """
+    Проверяет подпись SQL-скрипта миграции.
+    Возвращает True если подпись действительна, иначе выбрасывает исключение.
+    """
+    global verified_migrations_cache
+    
+    # Проверяем кэш
+    if migration_file in verified_migrations_cache:
+        logger.debug(f"Миграция {migration_file} уже проверена, используем кэш")
+        return True
+    
+    try:
+        # Извлекаем заголовки подписи
+        headers, clean_content = extract_signature_headers(sql_content)
+        
+        # Проверяем наличие всех необходимых заголовков
+        required_headers = ['SIGNATURE', 'SIGNED_BY', 'SIGNED_AT']
+        missing_headers = [h for h in required_headers if h not in headers]
+        
+        if missing_headers:
+            raise SignatureError(
+                f"Отсутствуют обязательные заголовки подписи: {', '.join(missing_headers)}",
+                migration_file
+            )
+        
+        # Проверяем контрольную сумму
+        if 'CHECKSUM' in headers:
+            calculated_checksum = hashlib.sha256(clean_content.encode('utf-8')).hexdigest()
+            if calculated_checksum != headers['CHECKSUM']:
+                raise SignatureError(
+                    f"Контрольная сумма не совпадает. Ожидалось: {headers['CHECKSUM']}, "
+                    f"Вычислено: {calculated_checksum}",
+                    migration_file
+                )
+            logger.debug(f"Контрольная сумма {migration_file} совпадает")
+        
+        # Получаем публичный ключ разработчика
+        signed_by = headers['SIGNED_BY']
+        if signed_by not in DEVELOPER_KEYS:
+            raise SignatureError(
+                f"Разработчик '{signed_by}' не найден в хранилище ключей. "
+                f"Доступные разработчики: {list(DEVELOPER_KEYS.keys())}",
+                migration_file
+            )
+        
+        # Загружаем публичный ключ
+        try:
+            public_key_pem = DEVELOPER_KEYS[signed_by].strip()
+            public_key = load_pem_public_key(
+                public_key_pem.encode('utf-8'),
+                backend=default_backend()
+            )
+        except Exception as e:
+            raise SignatureError(
+                f"Ошибка загрузки публичного ключа для {signed_by}: {str(e)}",
+                migration_file
+            )
+        
+        # Проверяем тип ключа (ожидаем ECDSA)
+        if not isinstance(public_key, ec.EllipticCurvePublicKey):
+            raise SignatureError(
+                f"Неподдерживаемый тип ключа. Ожидался ECDSA, получен {type(public_key).__name__}",
+                migration_file
+            )
+        
+        # Декодируем подпись из base64
+        try:
+            signature = base64.b64decode(headers['SIGNATURE'])
+        except Exception as e:
+            raise SignatureError(
+                f"Ошибка декодирования подписи: {str(e)}",
+                migration_file
+            )
+        
+        # Подготавливаем данные для проверки подписи
+        # Используем содержимое без заголовков + информацию о подписанте
+        verification_data = f"{clean_content}\n-- SIGNED_BY: {signed_by}\n-- SIGNED_AT: {headers['SIGNED_AT']}".encode('utf-8')
+        
+        # Проверяем подпись
+        try:
+            public_key.verify(
+                signature,
+                verification_data,
+                ec.ECDSA(hashes.SHA256())
+            )
+            logger.info(f"✓ Подпись миграции {migration_file} действительна (подписано: {signed_by})")
+            
+            # Добавляем в кэш проверенных миграций
+            verified_migrations_cache.add(migration_file)
+            return True
+            
+        except InvalidSignature:
+            raise SignatureError(
+                f"Недействительная подпись для миграции {migration_file}",
+                migration_file
+            )
+            
+    except SignatureError:
+        raise
+    except Exception as e:
+        raise SignatureError(
+            f"Неожиданная ошибка при проверке подписи: {str(e)}",
+            migration_file
+        )
+
+def verify_migration_file(migration_file: str, file_path: Path) -> bool:
+    """
+    Проверяет файл миграции на наличие действительной подписи.
+    """
+    global verified_migrations_cache
+    
+    # Проверяем кэш
+    if migration_file in verified_migrations_cache:
+        logger.debug(f"Миграция {migration_file} уже проверена ранее")
+        return True
+    
+    try:
+        # Читаем содержимое файла
+        with open(file_path, 'r', encoding='utf-8') as f:
+            sql_content = f.read()
+        
+        # Проверяем подпись
+        result = verify_migration_signature(migration_file, sql_content)
+        
+        # Если проверка прошла успешно, добавляем в кэш
+        if result:
+            verified_migrations_cache.add(migration_file)
+        
+        return result
+        
+    except SignatureError as e:
+        logger.error(str(e))
+        return False
+    except Exception as e:
+        logger.error(f"Ошибка при проверке файла миграции {migration_file}: {str(e)}")
+        return False
 
 # ==================== ДЕКОРАТОРЫ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 
@@ -210,6 +385,9 @@ def check_migrations_table(session) -> None:
                 execution_time_ms FLOAT,
                 status VARCHAR(20) NOT NULL DEFAULT 'success',
                 error_message TEXT,
+                signature_verified BOOLEAN DEFAULT TRUE,
+                signed_by VARCHAR(255),
+                signed_at TIMESTAMP WITH TIME ZONE,
                 UNIQUE(name, name_app)
             )
         """
@@ -373,10 +551,18 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
     Применяет одну миграцию. Возвращает True если успешно, False если ошибка.
     В случае ошибки выполняется откат всех изменений этой миграции.
     Если миграция уже была применена с ошибкой, выполняется повторная попытка.
+    Перед применением проверяется цифровая подпись миграции.
     """
     start_time = time.time()
     current_dir = Path(__file__).parent.parent
     file_path = current_dir / 'migrations' / migration_file
+    
+    # Данные для записи в БД
+    signature_info = {
+        'verified': False,
+        'signed_by': None,
+        'signed_at': None
+    }
     
     try:
         _log_migration_step(
@@ -385,8 +571,35 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
             f"Приложение: {app_name}"
         )
         
-        # Вычисление контрольной суммы
-        checksum = calculate_checksum(file_path)
+        # Вычисление контрольной суммы файла
+        file_checksum = calculate_checksum(file_path)
+        
+        # Чтение содержимого файла для проверки подписи
+        with open(file_path, 'r', encoding='utf-8') as f:
+            sql_content = f.read()
+        
+        # Извлекаем информацию о подписи для логирования
+        headers, clean_content = extract_signature_headers(sql_content)
+        if 'SIGNED_BY' in headers:
+            signature_info['signed_by'] = headers['SIGNED_BY']
+        if 'SIGNED_AT' in headers:
+            signature_info['signed_at'] = headers['SIGNED_AT']
+        
+        # Проверяем подпись миграции
+        _log_migration_step(
+            "Проверка подписи",
+            f"Файл: {migration_file}\n"
+            f"Подписант: {signature_info['signed_by'] or 'неизвестен'}\n"
+            f"Время подписи: {signature_info['signed_at'] or 'неизвестно'}"
+        )
+        
+        if not verify_migration_signature(migration_file, sql_content):
+            error_msg = f"Недействительная подпись миграции {migration_file}"
+            _log_migration_step("Ошибка подписи", error_msg, "error")
+            raise SignatureError(error_msg, migration_file)
+        
+        signature_info['verified'] = True
+        _log_migration_step("✓ Подпись действительна", f"Миграция {migration_file} прошла проверку")
         
         # Проверяем, существует ли уже запись о миграции (включая статус error)
         existing_migration = session.execute(
@@ -408,12 +621,8 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
                 f"Выполняется повторная попытка применения"
             )
         
-        # Чтение SQL из файла
-        with open(file_path, 'r', encoding='utf-8') as f:
-            sql = f.read()
-        
         # Разбиение на отдельные запросы
-        statements = split_sql_statements(sql)
+        statements = split_sql_statements(clean_content)
         
         # Выполнение каждого запроса
         for i, query in enumerate(statements, 1):
@@ -434,7 +643,7 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
         execution_time = (time.time() - start_time) * 1000
         
         if is_retry:
-            # Обновляем существующую запись
+            # Обновляем существующую запись с информацией о подписи
             session.execute(
                 text("""
                     UPDATE applied_migrations 
@@ -442,14 +651,20 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
                         execution_time_ms = :execution_time,
                         status = 'success',
                         error_message = NULL,
+                        signature_verified = :signature_verified,
+                        signed_by = :signed_by,
+                        signed_at = :signed_at::timestamp with time zone,
                         applied_at = NOW()
                     WHERE name = :name AND name_app = :name_app
                 """),
                 {
                     "name": migration_file, 
                     "name_app": app_name,
-                    "checksum": checksum,
-                    "execution_time": execution_time
+                    "checksum": file_checksum,
+                    "execution_time": execution_time,
+                    "signature_verified": signature_info['verified'],
+                    "signed_by": signature_info['signed_by'],
+                    "signed_at": signature_info['signed_at']
                 }
             )
             _log_migration_step(
@@ -457,30 +672,39 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
                 f"Файл: {migration_file}\n"
                 f"Приложение: {app_name}\n"
                 f"Статус изменен с 'error' на 'success'\n"
-                f"Контрольная сумма: {checksum}\n"
+                f"Подпись проверена: {signature_info['verified']}\n"
+                f"Подписант: {signature_info['signed_by']}\n"
+                f"Контрольная сумма: {file_checksum}\n"
                 f"Время выполнения: {execution_time:.2f} мс\n"
                 f"Выполнено запросов: {len(statements)}"
             )
         else:
-            # Создаем новую запись
+            # Создаем новую запись с информацией о подписи
             session.execute(
                 text("""
                     INSERT INTO applied_migrations 
-                    (name, name_app, checksum, execution_time_ms, status) 
-                    VALUES (:name, :name_app, :checksum, :execution_time, 'success')
+                    (name, name_app, checksum, execution_time_ms, status, 
+                     signature_verified, signed_by, signed_at) 
+                    VALUES (:name, :name_app, :checksum, :execution_time, 'success',
+                            :signature_verified, :signed_by, :signed_at::timestamp with time zone)
                 """),
                 {
                     "name": migration_file, 
                     "name_app": app_name,
-                    "checksum": checksum,
-                    "execution_time": execution_time
+                    "checksum": file_checksum,
+                    "execution_time": execution_time,
+                    "signature_verified": signature_info['verified'],
+                    "signed_by": signature_info['signed_by'],
+                    "signed_at": signature_info['signed_at']
                 }
             )
             _log_migration_step(
                 "Миграция успешно применена",
                 f"Файл: {migration_file}\n"
                 f"Приложение: {app_name}\n"
-                f"Контрольная сумма: {checksum}\n"
+                f"Подпись проверена: {signature_info['verified']}\n"
+                f"Подписант: {signature_info['signed_by']}\n"
+                f"Контрольная сумма: {file_checksum}\n"
                 f"Время выполнения: {execution_time:.2f} мс\n"
                 f"Выполнено запросов: {len(statements)}"
             )
@@ -488,48 +712,117 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
         session.commit()
         return True
         
-    except Exception as e:
-        # Уже выполнен rollback в блоке выполнения запросов
-        error_msg = f"Ошибка применения миграции {migration_file}: {str(e)}"
+    except SignatureError as e:
+        # Ошибка подписи - критическая, не записываем в БД как успешную
+        error_msg = str(e)
+        logger.critical(error_msg)
         
-        # Записываем информацию об ошибке в БД (в отдельной транзакции)
+        # Пытаемся записать информацию об ошибке подписи
         try:
             execution_time = (time.time() - start_time) * 1000
             
-            if existing_migration:
-                # Обновляем существующую запись об ошибке
+            # Используем вычисленную ранее контрольную сумму или пустую строку
+            checksum = file_checksum if 'file_checksum' in locals() else 'unknown'
+            
+            # Проверяем существование записи
+            existing = session.execute(
+                text("SELECT 1 FROM applied_migrations WHERE name = :name AND name_app = :name_app"),
+                {"name": migration_file, "name_app": app_name}
+            ).fetchone()
+            
+            if existing:
                 session.execute(
                     text("""
                         UPDATE applied_migrations 
-                        SET checksum = :checksum, 
-                            execution_time_ms = :execution_time,
-                            status = 'error',
+                        SET status = 'error',
                             error_message = :error_message,
+                            signature_verified = false,
                             applied_at = NOW()
                         WHERE name = :name AND name_app = :name_app
                     """),
                     {
-                        "name": migration_file, 
+                        "name": migration_file,
                         "name_app": app_name,
-                        "checksum": checksum,
-                        "execution_time": execution_time,
-                        "error_message": str(e)[:1000]
+                        "error_message": f"Ошибка подписи: {str(e)}"[:1000]
                     }
                 )
             else:
-                # Создаем новую запись об ошибке
                 session.execute(
                     text("""
                         INSERT INTO applied_migrations 
-                        (name, name_app, checksum, execution_time_ms, status, error_message) 
-                        VALUES (:name, :name_app, :checksum, :execution_time, 'error', :error_message)
+                        (name, name_app, checksum, execution_time_ms, status, error_message, signature_verified) 
+                        VALUES (:name, :name_app, :checksum, :execution_time, 'error', :error_message, false)
                     """),
                     {
-                        "name": migration_file, 
+                        "name": migration_file,
                         "name_app": app_name,
                         "checksum": checksum,
                         "execution_time": execution_time,
-                        "error_message": str(e)[:1000]
+                        "error_message": f"Ошибка подписи: {str(e)}"[:1000]
+                    }
+                )
+            session.commit()
+        except Exception as db_error:
+            logger.error(f"Ошибка записи информации об ошибке подписи: {db_error}")
+            session.rollback()
+        
+        _log_migration_step("Ошибка подписи", error_msg, "critical")
+        return False
+        
+    except Exception as e:
+        # Другие ошибки применения миграции
+        error_msg = f"Ошибка применения миграции {migration_file}: {str(e)}"
+        
+        # Записываем информацию об ошибке в БД
+        try:
+            execution_time = (time.time() - start_time) * 1000
+            checksum = file_checksum if 'file_checksum' in locals() else 'unknown'
+            
+            existing = session.execute(
+                text("SELECT 1 FROM applied_migrations WHERE name = :name AND name_app = :name_app"),
+                {"name": migration_file, "name_app": app_name}
+            ).fetchone()
+            
+            if existing:
+                session.execute(
+                    text("""
+                        UPDATE applied_migrations 
+                        SET checksum = :checksum,
+                            execution_time_ms = :execution_time,
+                            status = 'error',
+                            error_message = :error_message,
+                            signature_verified = :signature_verified,
+                            signed_by = :signed_by,
+                            applied_at = NOW()
+                        WHERE name = :name AND name_app = :name_app
+                    """),
+                    {
+                        "name": migration_file,
+                        "name_app": app_name,
+                        "checksum": checksum,
+                        "execution_time": execution_time,
+                        "error_message": str(e)[:1000],
+                        "signature_verified": signature_info.get('verified', False),
+                        "signed_by": signature_info.get('signed_by')
+                    }
+                )
+            else:
+                session.execute(
+                    text("""
+                        INSERT INTO applied_migrations 
+                        (name, name_app, checksum, execution_time_ms, status, error_message,
+                         signature_verified, signed_by) 
+                        VALUES (:name, :name_app, :checksum, :execution_time, 'error', :error_message,
+                                :signature_verified, :signed_by)
+                    """),
+                    {
+                        "name": migration_file,
+                        "name_app": app_name,
+                        "checksum": checksum,
+                        "execution_time": execution_time,
+                        "error_message": str(e)[:1000],
+                        "signature_verified": signature_info.get('verified', False),
+                        "signed_by": signature_info.get('signed_by')
                     }
                 )
             session.commit()
@@ -544,18 +837,41 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
 def run_migrations(session) -> List[str]:
     """
     Выполняет все непримененные миграции по очереди.
+    Выполняется только один раз. Ожидает готовности БД (FLAG_DB_ACTIVE = 1).
+    Устанавливает FLAG_MIGRATION_COMPLETE:
+        2 - миграции выполняются
+        1 - все миграции успешно применены
+        0 - ошибка при выполнении миграций
     """
     global migration_status_cache
     
-    # Если кэш установлен и миграции завершены, ничего не делаем
-    if migration_status_cache['checked'] and migration_status_cache['complete']:
-        logger.debug("Миграции уже завершены (кэш), пропускаем выполнение")
+    # Проверяем, не выполнялись ли уже миграции
+    current_flag = get_migration_flag()
+    if current_flag == 1:
+        logger.debug("Миграции уже успешно выполнены (флаг = 1), пропускаем выполнение")
         return []
+    elif current_flag == 2:
+        logger.debug("Миграции уже выполняются в другом потоке (флаг = 2), пропускаем")
+        return []
+    
+    # Устанавливаем флаг "выполняется"
+    logger.info("Установка флага FLAG_MIGRATION_COMPLETE = 2 (выполняется)")
+    set_migration_flag(2)
     
     total_start = time.time()
     applied_migrations = []
     
     try:
+        # Ожидаем готовности базы данных
+        logger.info("Ожидание готовности базы данных (FLAG_DB_ACTIVE = 1)...")
+        if not wait_for_db_flag(max_attempts=30, delay=2.0):
+            error_msg = "База данных недоступна после множества попыток, миграции не могут быть выполнены"
+            _log_migration_step("Критическая ошибка", error_msg, "critical")
+            set_migration_flag(0)
+            raise MigrationError(error_msg)
+        
+        logger.info("База данных готова, запуск миграций")
+        
         status_data = _get_migration_status_data(session)
         app_name = status_data['app_name']
         pending = status_data['pending']
@@ -563,7 +879,7 @@ def run_migrations(session) -> List[str]:
         _log_migration_step(
             "Запуск процесса миграций",
             f"Приложение: {app_name}\n"
-            f"Стратегия: Остановка при первой ошибкой\n"
+            f"Стратегия: Остановка при первой ошибке\n"
             f"Повторное применение миграций с ошибками"
         )
         
@@ -575,6 +891,10 @@ def run_migrations(session) -> List[str]:
             )
             _update_migration_cache(complete=True, has_errors=False, pending_count=0)
             logger.debug("Миграции завершены, кэш обновлен")
+            
+            # Устанавливаем флаг "успешно"
+            logger.info("Установка флага FLAG_MIGRATION_COMPLETE = 1 (успешно)")
+            set_migration_flag(1)
             return []
         
         # Применение миграций по порядку
@@ -604,17 +924,26 @@ def run_migrations(session) -> List[str]:
                 remaining_pending = len(pending) - len(applied_migrations)
                 _update_migration_cache(complete=False, has_errors=True, pending_count=remaining_pending)
                 
+                # Устанавливаем флаг "ошибка"
+                logger.info("Установка флага FLAG_MIGRATION_COMPLETE = 0 (ошибка)")
+                set_migration_flag(0)
+                
                 raise MigrationError(error_msg, migration_file)
         
         # Если все миграции успешно применены
         total_time = (time.time() - total_start) * 1000
         _update_migration_cache(complete=True, has_errors=False, pending_count=0)
         
+        # Устанавливаем флаг "успешно"
+        logger.info("Установка флага FLAG_MIGRATION_COMPLETE = 1 (успешно)")
+        set_migration_flag(1)
+        
         _log_migration_step(
             "Все миграции успешно применены",
             f"Приложение: {app_name}\n"
             f"Кэш миграций обновлен\n"
             f"Применено в этой сессии: {len(applied_migrations)}\n"
+            f"Всего проверенных подписей: {len(verified_migrations_cache)}\n"
             f"Общее время: {total_time:.2f} мс"
         )
         
@@ -629,6 +958,12 @@ def run_migrations(session) -> List[str]:
             f"Кэш миграций обновлен с информацией об ошибке",
             "critical"
         )
+        
+        # Устанавливаем флаг "ошибка" если еще не установлен
+        if get_migration_flag() != 0:
+            logger.info("Установка флага FLAG_MIGRATION_COMPLETE = 0 (ошибка)")
+            set_migration_flag(0)
+        
         raise MigrationError(f"Процесс миграций завершен с ошибкой: {str(e)}") from e
 
 @with_db_session
@@ -689,6 +1024,18 @@ def is_migration_complete(session) -> bool:
     """
     global migration_status_cache
     
+    # Сначала проверяем флаг миграции
+    flag_value = get_migration_flag()
+    if flag_value == 1:
+        logger.debug("Флаг миграции = 1, миграции успешно завершены")
+        return True
+    elif flag_value == 0:
+        logger.debug("Флаг миграции = 0, миграции завершились ошибкой")
+        return False
+    elif flag_value == 2:
+        logger.debug("Флаг миграции = 2, миграции выполняются")
+        return False
+    
     # Если статус уже проверен и нет ожидающих миграций, возвращаем результат из кэша
     if migration_status_cache['checked'] and migration_status_cache['pending_count'] == 0:
         logger.debug(f"Используется кэш миграций: complete={migration_status_cache['complete']}, has_errors={migration_status_cache['has_errors']}")
@@ -742,7 +1089,9 @@ def get_migration_status(session) -> Dict:
             'pending_migrations': status_data['pending'],
             'applied_migrations': applied_details,
             'all_complete': status_data['complete'],
-            'has_errors': status_data['has_errors']
+            'has_errors': status_data['has_errors'],
+            'migration_flag': get_migration_flag(),
+            'verified_migrations_count': len(verified_migrations_cache)
         }
         
     except Exception as e:
@@ -755,5 +1104,59 @@ def get_migration_status(session) -> Dict:
             'applied_migrations': [],
             'all_complete': False,
             'has_errors': True,
+            'migration_flag': get_migration_flag(),
+            'verified_migrations_count': 0,
             'error': str(e)
         }
+
+# ==================== УТИЛИТЫ ДЛЯ РАБОТЫ С ПОДПИСЯМИ ====================
+
+def verify_all_migrations() -> Dict[str, bool]:
+    """
+    Проверяет подписи всех файлов миграций без их применения.
+    Возвращает словарь {имя_файла: результат_проверки}
+    """
+    results = {}
+    migration_files = get_migration_files()
+    current_dir = Path(__file__).parent.parent
+    migrations_dir = current_dir / 'migrations'
+    
+    logger.info(f"Проверка подписей {len(migration_files)} файлов миграций...")
+    
+    for migration_file in migration_files:
+        file_path = migrations_dir / migration_file
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                sql_content = f.read()
+            
+            result = verify_migration_signature(migration_file, sql_content)
+            results[migration_file] = result
+            
+            if result:
+                logger.info(f"✓ {migration_file}: подпись действительна")
+            else:
+                logger.error(f"✗ {migration_file}: подпись недействительна")
+                
+        except Exception as e:
+            logger.error(f"✗ {migration_file}: ошибка проверки - {str(e)}")
+            results[migration_file] = False
+    
+    return results
+
+def get_verification_cache_info() -> Dict[str, Any]:
+    """
+    Возвращает информацию о кэше проверенных подписей
+    """
+    return {
+        'cached_migrations': list(verified_migrations_cache),
+        'cache_size': len(verified_migrations_cache),
+        'cache_type': 'verified_migrations'
+    }
+
+def clear_verification_cache() -> None:
+    """
+    Очищает кэш проверенных подписей
+    """
+    global verified_migrations_cache
+    verified_migrations_cache.clear()
+    logger.info("Кэш проверенных подписей очищен")

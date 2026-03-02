@@ -3,123 +3,141 @@
 
 from flask import Blueprint, jsonify
 import logging
-import os
 
-# Импорт модулей для проверки БД
-from maintenance.database_connector import is_database_healthy, is_database_initialized
-# Импорт модуля миграций
-from maintenance.migration import is_migration_complete, check_migrations_status
-# Импорт функции проверки готовности сервиса конфигураций
-from maintenance.config_read import is_config_service_ready
+# Импорт для получения флагов
+from maintenance.flag_state import (
+    get_env_flag, get_local_flag, get_global_flag,
+    get_db_flag, get_migration_flag
+)
 
 logger = logging.getLogger(__name__)
 readyz_bp = Blueprint('readyz', __name__)
 
-def _check_config_service_readiness():
+def _check_all_flags():
     """
-    Проверка готовности сервиса конфигураций через config_read
+    Проверка всех флагов для readiness пробы:
+    - FLAG_GET_ENV: наличие .env файла
+    - FLAG_GET_LOCAL: наличие global.conf файла
+    - FLAG_GET_GLOBAL: доступность глобального сервиса конфигураций
+    - FLAG_DB_ACTIVE: активность базы данных
+    - FLAG_MIGRATION_COMPLETE: статус миграций (1 - успешно, 2 - выполняется)
+    
+    Returns:
+        tuple: (успех, список проблем)
     """
-    try:
-        is_ready = is_config_service_ready()
-        if is_ready:
-            logger.debug("Сервис конфигураций готов")
-            return True
-        else:
-            logger.warning("Сервис конфигураций не готов")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Ошибка при проверке готовности сервиса конфигураций: {e}")
-        return False
-
-def _check_database_readiness():
-    """
-    Проверка готовности базы данных
-    """
-    try:
-        # Проверяем, инициализирована ли база данных
-        if not is_database_initialized():
-            logger.warning("База данных не инициализирована")
-            return False
-        
-        # Проверяем здоровье базы данных
-        if is_database_healthy():
-            logger.debug("База данных готова")
-            return True
-        else:
-            logger.warning("База данных не готова")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Ошибка при проверке готовности базы данных: {e}")
-        return False
-
-def _check_migrations_status():
-    """
-    Проверка статуса миграций базы данных
-    """
-    try:
-        # Используем только одну функцию для проверки
-        migrations_complete, status_message, pending_migrations = check_migrations_status()
-        
-        if migrations_complete:
-            logger.debug(f"Миграции базы данных завершены: {status_message}")
-            return True
-        else:
-            logger.warning(f"Миграции базы данных не завершены: {status_message}")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Ошибка при проверке статуса миграций: {e}")
-        return False
+    issues = []
+    
+    # Проверяем флаг FLAG_GET_ENV
+    env_flag = get_env_flag()
+    if env_flag != 1:
+        issues.append(f"FLAG_GET_ENV={env_flag} (ожидается 1)")
+        logger.warning(f"FLAG_GET_ENV = {env_flag} (ожидается 1)")
+    
+    # Проверяем флаг FLAG_GET_LOCAL
+    local_flag = get_local_flag()
+    if local_flag != 1:
+        issues.append(f"FLAG_GET_LOCAL={local_flag} (ожидается 1)")
+        logger.warning(f"FLAG_GET_LOCAL = {local_flag} (ожидается 1)")
+    
+    # Проверяем флаг FLAG_GET_GLOBAL
+    global_flag = get_global_flag()
+    if global_flag != 1:
+        issues.append(f"FLAG_GET_GLOBAL={global_flag} (ожидается 1)")
+        logger.warning(f"FLAG_GET_GLOBAL = {global_flag} (ожидается 1)")
+    
+    # Проверяем флаг FLAG_DB_ACTIVE
+    db_flag = get_db_flag()
+    if db_flag != 1:
+        issues.append(f"FLAG_DB_ACTIVE={db_flag} (ожидается 1)")
+        logger.warning(f"FLAG_DB_ACTIVE = {db_flag} (ожидается 1)")
+    
+    # Проверяем флаг FLAG_MIGRATION_COMPLETE
+    migration_flag = get_migration_flag()
+    if migration_flag not in [1, 2]:
+        issues.append(f"FLAG_MIGRATION_COMPLETE={migration_flag} (ожидается 1 или 2)")
+        logger.warning(f"FLAG_MIGRATION_COMPLETE = {migration_flag} (ожидается 1 или 2)")
+    elif migration_flag == 2:
+        logger.info("Миграции выполняются (FLAG_MIGRATION_COMPLETE=2) - сервис считается готовым")
+    
+    return len(issues) == 0, issues
 
 @readyz_bp.route('/readyz', methods=['GET'])
 def readyz():
-    logger.debug("Проверка готовности сервиса")
+    """
+    Readiness проба для Kubernetes.
+    Проверяет, что сервис готов принимать трафик.
     
-    # Проверяем готовность сервиса конфигураций
-    config_ready = _check_config_service_readiness()
+    Возвращает:
+        200 OK: если все необходимые флаги установлены корректно
+        503 Service Unavailable: если хотя бы один необходимый флаг не в нужном состоянии
+    """
+    logger.debug("Проверка readiness (готовности) сервиса")
     
-    # Проверяем готовность базы данных
-    db_ready = _check_database_readiness()
+    # Проверяем все флаги
+    all_flags_ok, issues = _check_all_flags()
     
-    # Проверяем статус миграций
-    migrations_ready = _check_migrations_status()
-    
-    # Определяем общий статус
-    all_ready = config_ready and db_ready and migrations_ready
+    # Получаем текущие значения флагов
+    flags = {
+        "FLAG_GET_ENV": get_env_flag(),
+        "FLAG_GET_LOCAL": get_local_flag(),
+        "FLAG_GET_GLOBAL": get_global_flag(),
+        "FLAG_DB_ACTIVE": get_db_flag(),
+        "FLAG_MIGRATION_COMPLETE": get_migration_flag()
+    }
     
     # Формируем ответ
-    if all_ready:
-        response_data = {"status": True}
+    if all_flags_ok:
+        response_data = {
+            "status": True,
+            "message": "Service is ready to accept traffic",
+            "flags": flags,
+            "migration_status": "in_progress" if flags["FLAG_MIGRATION_COMPLETE"] == 2 else "complete"
+        }
+        
+        if flags["FLAG_MIGRATION_COMPLETE"] == 2:
+            logger.debug("Readiness проверка успешна: миграции выполняются, сервис готов")
+        else:
+            logger.debug("Readiness проверка успешна: все флаги = 1")
+            
         return jsonify(response_data), 200
     else:
-        response_data = {"status": False}
+        response_data = {
+            "status": False,
+            "message": "Service is not ready to accept traffic",
+            "issues": issues,
+            "flags": flags
+        }
+        logger.warning(f"Readiness проверка не пройдена: {', '.join(issues)}")
         return jsonify(response_data), 503  # Service Unavailable
-    
+
 # Основные принципы работы этого endpoint:
 #
 # 1. Отличие от /healthz:
-#    - /healthz проверяет "живость" сервиса (liveness)
-#    - /readyz проверяет готовность обрабатывать запросы (readiness)
+#    - /healthz проверяет "живость" сервиса (liveness) - критически важные компоненты
+#    - /readyz проверяет готовность обрабатывать запросы (readiness) - все необходимые компоненты
 #
 # 2. Типичные сценарии использования:
 #    - Kubernetes использует для управления подами трафика
 #    - Балансировщики нагрузки для исключения/включения нод
 #    - В оркестраторах при rolling updates
 #
-# 3. В продакшн-среде следует добавить проверки:
-#    - Доступность подключений к БД
-#    - Загрузка CPU/памяти
-#    - Наличие свободного места на диске
-#    - Состояние кэшей
+# 3. Проверяемые компоненты:
+#    - FLAG_GET_ENV: наличие .env файла (критично)
+#    - FLAG_GET_LOCAL: наличие global.conf файла (критично)
+#    - FLAG_GET_GLOBAL: доступность глобального сервиса конфигураций (критично)
+#    - FLAG_DB_ACTIVE: активность базы данных (критично)
+#    - FLAG_MIGRATION_COMPLETE: статус миграций (1 - успешно, 2 - выполняется)
 #
-# 4. Оптимизации:
+# 4. Особенности проверки миграций:
+#    - FLAG_MIGRATION_COMPLETE = 1: миграции успешно завершены
+#    - FLAG_MIGRATION_COMPLETE = 2: миграции выполняются (сервис считается готовым)
+#    - FLAG_MIGRATION_COMPLETE = 0: ошибка миграций (сервис не готов)
+#
+# 5. Оптимизации:
 #    - Минимизировать внешние зависимости проверок
-#    - Кэшировать результаты, если проверки ресурсоемкие
+#    - Использовать флаги вместо прямых проверок для скорости
 #    - Добавлять timeout для внешних проверок
 #
-# 5. Безопасность:
-#    - Не должен раскрывать sensitive-информацию
-#    - Можно добавить базовую аутентификацию
+# 6. Безопасность:
+#    - Не раскрывает sensitive-информацию
 #    - Рекомендуется закрыть от публичного доступа

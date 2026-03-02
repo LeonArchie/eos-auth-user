@@ -5,8 +5,8 @@
 from flask import Blueprint, jsonify
 import logging
 
-# Импорт для проверки БД
-from maintenance.database_connector import is_database_initialized
+# Импорт для получения флагов
+from maintenance.flag_state import get_env_flag, get_local_flag, get_global_flag
 
 # Создаем логгер для текущего модуля
 logger = logging.getLogger(__name__)
@@ -14,78 +14,86 @@ logger = logging.getLogger(__name__)
 # Создаем Blueprint для healthcheck-эндпоинтов
 healthz_bp = Blueprint('healthz', __name__)
 
-def _check_database_connection():
+def _check_critical_flags():
     """
-    Проверка подключения к базе данных
+    Проверка критических флагов для liveness пробы:
+    - FLAG_GET_ENV: наличие .env файла
+    - FLAG_GET_LOCAL: наличие global.conf файла
+    - FLAG_GET_GLOBAL: доступность глобального сервиса конфигураций
+    
+    Returns:
+        tuple: (успех, список проблем)
     """
-    try:
-        if is_database_initialized():
-            return True
-        else:
-            return False
-    except Exception as e:
-        logger.error(f"Ошибка проверки подключения к БД: {e}")
-        return False, f"Database connection error: {str(e)}"
+    issues = []
+    
+    # Проверяем флаг FLAG_GET_ENV
+    env_flag = get_env_flag()
+    if env_flag != 1:
+        issues.append(f"FLAG_GET_ENV={env_flag} (ожидается 1)")
+        logger.warning(f"FLAG_GET_ENV = {env_flag} (ожидается 1)")
+    
+    # Проверяем флаг FLAG_GET_LOCAL
+    local_flag = get_local_flag()
+    if local_flag != 1:
+        issues.append(f"FLAG_GET_LOCAL={local_flag} (ожидается 1)")
+        logger.warning(f"FLAG_GET_LOCAL = {local_flag} (ожидается 1)")
+    
+    # Проверяем флаг FLAG_GET_GLOBAL
+    global_flag = get_global_flag()
+    if global_flag != 1:
+        issues.append(f"FLAG_GET_GLOBAL={global_flag} (ожидается 1)")
+        logger.warning(f"FLAG_GET_GLOBAL = {global_flag} (ожидается 1)")
+    
+    return len(issues) == 0, issues
 
 # Декорируем функцию для обработки GET-запросов по пути '/healthz'
 @healthz_bp.route('/healthz', methods=['GET'])
 def healthz():
-    logger.debug("Проверка работоспособности сервиса")
-
-    # Проверяем подключение к БД
-    db_ready = _check_database_connection()
+    """
+    Liveness проба для Kubernetes.
+    Проверяет, что сервис жив и может функционировать.
+    
+    Возвращает:
+        200 OK: если все критические флаги установлены в 1
+        503 Service Unavailable: если хотя бы один критический флаг не равен 1
+    """
+    logger.debug("Проверка liveness (живости) сервиса")
+    
+    # Проверяем критические флаги
+    all_flags_ok, issues = _check_critical_flags()
     
     # Формируем ответ
-    if db_ready:
-        response_data = {"status": True}
+    if all_flags_ok:
+        response_data = {
+            "status": True,
+            "message": "Service is alive",
+            "flags": {
+                "FLAG_GET_ENV": get_env_flag(),
+                "FLAG_GET_LOCAL": get_local_flag(),
+                "FLAG_GET_GLOBAL": get_global_flag()
+            }
+        }
+        logger.debug("Liveness проверка успешна: все критические флаги = 1")
         return jsonify(response_data), 200
     else:
-        response_data = {"status": False}
-        return jsonify(response_data), 503
+        response_data = {
+            "status": False,
+            "message": "Service is not alive",
+            "issues": issues,
+            "flags": {
+                "FLAG_GET_ENV": get_env_flag(),
+                "FLAG_GET_LOCAL": get_local_flag(),
+                "FLAG_GET_GLOBAL": get_global_flag()
+            }
+        }
+        logger.warning(f"Liveness проверка не пройдена: {', '.join(issues)}")
+        return jsonify(response_data), 503  # Service Unavailable
 
 # Примечания:
-# 1. Этот эндпоинт проверяет "живость" сервиса (liveness)
-# 2. В отличие от /readyz, здесь проверяются базовые показатели здоровья
-# 3. Kubernetes перезапускает контейнер если /healthz возвращает ошибку
-# 4. Проверки должны быть легковесными и быстрыми
-
-# Примечания:
-# 1. Этот эндпоинт проверяет "живость" сервиса (liveness)
-# 2. В отличие от /readyz, здесь проверяются базовые показатели здоровья
-# 3. Kubernetes перезапускает контейнер если /healthz возвращает ошибку
-# 4. Проверки должны быть легковесными и быстрыми
-# Основные принципы работы этого endpoint:
-#
-# 1. Отличие от /healthz:
-#    - /healthz проверяет "живость" сервиса (liveness)
-#    - /readyz проверяет готовность обрабатывать запросы (readiness)
-#
-# 2. Типичные сценарии использования:
-#    - Kubernetes использует для управления подами трафика
-#    - Балансировщики нагрузки для исключения/включения нод
-#    - В оркестраторах при rolling updates
-#
-# 3. Проверки готовности:
-#    - Сервис конфигураций (внешняя зависимость)
-#    - База данных (критическая внутренняя зависимость)
-#    - Другие внешние сервисы при необходимости
-#
-# 4. Оптимизации:
-#    - Минимизировать внешние зависимости проверок
-#    - Кэшировать результаты, если проверки ресурсоемкие
-#    - Добавлять timeout для внешних проверок
-#
-# 5. Безопасность:
-#    - Не должен раскрывать sensitive-информацию
-#    - Можно добавить базовую аутентификацию
-#    - Рекомендуется закрыть от публичного доступа
-
-# Примечания:
-# 1. Этот эндпоинт должен быть максимально простым и быстрым, так как:
-#    - Он часто вызывается системами мониторинга (Kubernetes, Docker и др.)
-#    - Не должен зависеть от других сервисов (это проверка именно этого сервиса)
-# 2. В продакшне можно добавить проверки:
-#    - Доступности базы данных
-#    - Наличия свободного места на диске
-#    - Доступности других критичных ресурсов
-# 3. Логирование помогает отслеживать частоту проверок и выявлять проблемы
+# 1. Этот эндпоинт проверяет "живость" сервиса (liveness probe)
+# 2. Kubernetes перезапускает контейнер если /healthz возвращает ошибку
+# 3. Проверки должны быть легковесными и быстрыми
+# 4. Критические флаги: 
+#    - FLAG_GET_ENV = 1: .env файл существует
+#    - FLAG_GET_LOCAL = 1: global.conf файл существует
+#    - FLAG_GET_GLOBAL = 1: сервис глобальных конфигураций доступен
