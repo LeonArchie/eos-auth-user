@@ -837,7 +837,7 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
                         error_message = NULL,
                         signature_verified = :signature_verified,
                         signed_by = :signed_by,
-                        signed_at = :signed_at::timestamp with time zone,
+                        signed_at = CAST(:signed_at AS timestamp with time zone),
                         applied_at = NOW()
                     WHERE name = :name AND name_app = :name_app
                 """),
@@ -871,7 +871,7 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
                     (name, name_app, checksum, execution_time_ms, status, 
                      signature_verified, signed_by, signed_at) 
                     VALUES (:name, :name_app, :checksum, :execution_time, 'success',
-                            :signature_verified, :signed_by, :signed_at::timestamp with time zone)
+                            :signature_verified, :signed_by, CAST(:signed_at AS timestamp with time zone))
                 """),
                 {
                     "name": migration_file, 
