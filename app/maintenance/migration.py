@@ -104,6 +104,12 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
         headers, clean_content = extract_signature_headers(sql_content)
         logger.debug(f"  Извлеченные заголовки: {list(headers.keys())}")
         
+        # Добавляем диагностику
+        logger.debug("  ДИАГНОСТИКА: Сравнение хэшей")
+        raw_content = sql_content.encode('utf-8')  # Используем sql_content вместо чтения файла
+        logger.debug(f"    RAW content hash (с заголовками): {hashlib.sha256(raw_content).hexdigest()}")
+        logger.debug(f"    Clean content hash (без заголовков): {hashlib.sha256(clean_content.encode('utf-8')).hexdigest()}")
+        
         # Проверяем наличие всех необходимых заголовков
         required_headers = ['SIGNATURE', 'SIGNED_BY', 'SIGNED_AT']
         missing_headers = [h for h in required_headers if h not in headers]
