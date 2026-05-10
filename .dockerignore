@@ -8,3 +8,9 @@ __pycache__
 Dockerfile
 .dockerignore
 README.md
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build

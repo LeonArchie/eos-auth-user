@@ -1,6 +1,6 @@
 # Используем многоэтапную сборку
 # Этап сборки
-FROM python:3.9-slim as builder
+FROM python:3.14.4-slim as builder
 
 WORKDIR /
 
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # ---
 # Финальный этап
-FROM python:3.9-slim
+FROM python:3.14.4-slim
 
 WORKDIR /app
 
