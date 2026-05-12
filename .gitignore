@@ -3,3 +3,8 @@
 *.temp
 .vscode/
 __pycache__/
+results/
+.insect.log
+bandit_report.html
+security_report.html
+report.html

@@ -65,7 +65,7 @@ class FlagState:
                     for callback in self._callbacks[flag_name]:
                         try:
                             callback(flag_name, old_value, value)
-                        except Exception:
+                        except Exception: # nosec B110 - защита от ошибок в колбэках
                             pass
             return True
     

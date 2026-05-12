@@ -1,12 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 # Copyright (C) 2025 Петунин Лев Михайлович
 
-import os
 import re
 import hashlib
 import time
 import base64
-from typing import Dict, List, Tuple, Optional, Callable, Any, Set
+from typing import Dict, List, Tuple, Optional, Callable, Any
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -18,7 +17,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 
-from maintenance.flag_state import set_migration_flag, get_migration_flag, get_db_flag
+from maintenance.flag_state import set_migration_flag, get_migration_flag
 from maintenance.wait_for_flag import wait_for_db_flag
 from migrations.developers_keys import DEVELOPER_KEYS, verified_migrations_cache
 
@@ -95,7 +94,7 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
     # Проверяем кэш
     if migration_file in verified_migrations_cache:
         logger.debug(f"  Миграция {migration_file} уже проверена, используем кэш")
-        logger.debug(f"=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (кэш) ===")
+        logger.debug("=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (кэш) ===")
         return True
     
     try:
@@ -120,7 +119,7 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
                 f"Отсутствуют обязательные заголовки подписи: {', '.join(missing_headers)}",
                 migration_file
             )
-        logger.debug(f"  Все обязательные заголовки присутствуют")
+        logger.debug("  Все обязательные заголовки присутствуют")
         
         # Проверяем контрольную сумму
         if 'CHECKSUM' in headers:
@@ -177,7 +176,7 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
                 f"Неподдерживаемый тип ключа. Ожидался ECDSA, получен {type(public_key).__name__}",
                 migration_file
             )
-        logger.debug(f"  Тип ключа корректен (ECDSA)")
+        logger.debug("  Тип ключа корректен (ECDSA)")
         
         # Декодируем подпись из base64
         logger.debug("  Шаг 5: Декодирование подписи из base64")
@@ -211,22 +210,22 @@ def verify_migration_signature(migration_file: str, sql_content: str) -> bool:
             
             # Добавляем в кэш проверенных миграций
             verified_migrations_cache.add(migration_file)
-            logger.debug(f"  Миграция добавлена в кэш проверенных")
-            logger.debug(f"=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (успешно) ===")
+            logger.debug("  Миграция добавлена в кэш проверенных")
+            logger.debug("=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (успешно) ===")
             return True
             
         except InvalidSignature:
-            logger.error(f"  Недействительная подпись для миграции")
+            logger.error("  Недействительная подпись для миграции")
             raise SignatureError(
                 f"Недействительная подпись для миграции {migration_file}",
                 migration_file
             )
             
     except SignatureError:
-        logger.debug(f"=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (SignatureError) ===")
+        logger.debug("=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (SignatureError) ===")
         raise
     except Exception as e:
-        logger.debug(f"=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (неожиданная ошибка) ===")
+        logger.debug("=== КОНЕЦ ПРОВЕРКИ ПОДПИСИ (неожиданная ошибка) ===")
         raise SignatureError(
             f"Неожиданная ошибка при проверке подписи: {str(e)}",
             migration_file
@@ -243,7 +242,7 @@ def verify_migration_file(migration_file: str, file_path: Path) -> bool:
     # Проверяем кэш
     if migration_file in verified_migrations_cache:
         logger.debug(f"  Миграция {migration_file} уже проверена ранее (кэш)")
-        logger.debug(f"  Результат: True (из кэша)")
+        logger.debug("  Результат: True (из кэша)")
         return True
     
     try:
@@ -261,7 +260,7 @@ def verify_migration_file(migration_file: str, file_path: Path) -> bool:
         # Если проверка прошла успешно, добавляем в кэш
         if result:
             verified_migrations_cache.add(migration_file)
-            logger.debug(f"  Миграция добавлена в кэш")
+            logger.debug("  Миграция добавлена в кэш")
         
         logger.debug(f"  Конец проверки файла, результат: {result}")
         return result
@@ -333,7 +332,7 @@ def _update_migration_cache(complete: bool, has_errors: bool, pending_count: int
 
 def _get_migration_status_data(session) -> Dict[str, Any]:
     """Базовая функция для получения данных о статусе миграций"""
-    logger.debug(f"ПОЛУЧЕНИЕ ДАННЫХ О СТАТУСЕ МИГРАЦИЙ")
+    logger.debug("ПОЛУЧЕНИЕ ДАННЫХ О СТАТУСЕ МИГРАЦИЙ")
     
     app_name = get_app_name()
     logger.debug(f"  app_name={app_name}")
@@ -369,7 +368,7 @@ def get_app_name() -> str:
     """
     Получает имя приложения из файла global.conf
     """
-    logger.debug(f"ПОЛУЧЕНИЕ ИМЕНИ ПРИЛОЖЕНИЯ ИЗ global.conf")
+    logger.debug("ПОЛУЧЕНИЕ ИМЕНИ ПРИЛОЖЕНИЯ ИЗ global.conf")
     
     try:
         current_dir = Path(__file__).parent.parent
@@ -412,7 +411,7 @@ def get_migration_files() -> List[str]:
     """
     Получаем список файлов миграций в правильном порядке
     """
-    logger.debug(f"ПОЛУЧЕНИЕ СПИСКА ФАЙЛОВ МИГРАЦИЙ")
+    logger.debug("ПОЛУЧЕНИЕ СПИСКА ФАЙЛОВ МИГРАЦИЙ")
     
     try:
         current_dir = Path(__file__).parent.parent
@@ -474,7 +473,7 @@ def check_migrations_table(session) -> None:
     """
     Проверяем наличие таблицы миграций и создаем если ее нет
     """
-    logger.debug(f"ПРОВЕРКА ТАБЛИЦЫ applied_migrations")
+    logger.debug("ПРОВЕРКА ТАБЛИЦЫ applied_migrations")
     
     try:
         _log_migration_step("Проверка таблицы applied_migrations")
@@ -896,7 +895,7 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
         
         session.commit()
         logger.debug("  Транзакция закоммичена")
-        logger.debug(f"=== ПРИМЕНЕНИЕ МИГРАЦИИ ЗАВЕРШЕНО (успешно) ===")
+        logger.debug("=== ПРИМЕНЕНИЕ МИГРАЦИИ ЗАВЕРШЕНО (успешно) ===")
         return True
         
     except SignatureError as e:
@@ -959,7 +958,7 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
             session.rollback()
         
         _log_migration_step("Ошибка подписи", error_msg, "critical")
-        logger.debug(f"=== ПРИМЕНЕНИЕ МИГРАЦИИ ЗАВЕРШЕНО (SignatureError) ===")
+        logger.debug("=== ПРИМЕНЕНИЕ МИГРАЦИИ ЗАВЕРШЕНО (SignatureError) ===")
         return False
         
     except Exception as e:
@@ -1029,7 +1028,7 @@ def apply_migration(session, migration_file: str, app_name: str) -> bool:
             session.rollback()
         
         _log_migration_step("Ошибка", error_msg, "error")
-        logger.debug(f"=== ПРИМЕНЕНИЕ МИГРАЦИИ ЗАВЕРШЕНО (ошибка) ===")
+        logger.debug("=== ПРИМЕНЕНИЕ МИГРАЦИИ ЗАВЕРШЕНО (ошибка) ===")
         return False
 
 @with_db_session
@@ -1042,7 +1041,7 @@ def run_migrations(session) -> List[str]:
         1 - все миграции успешно применены
         0 - ошибка при выполнении миграций
     """
-    logger.debug(f"=== ЗАПУСК run_migrations ===")
+    logger.debug("=== ЗАПУСК run_migrations ===")
     
     global migration_status_cache
     
@@ -1125,7 +1124,7 @@ def run_migrations(session) -> List[str]:
                     "Первое применение миграции",
                     f"Миграция: {migration_file}"
                 )
-                logger.debug(f"    Первое применение")
+                logger.debug("    Первое применение")
             
             logger.debug(f"  Вызов apply_migration для {migration_file}")
             success = apply_migration(session, migration_file, app_name)
@@ -1133,7 +1132,7 @@ def run_migrations(session) -> List[str]:
             
             if success:
                 applied_migrations.append(migration_file)
-                logger.debug(f"  Миграция добавлена в список примененных")
+                logger.debug("  Миграция добавлена в список примененных")
             else:
                 error_msg = f"Миграция {migration_file} завершилась ошибкой. Процесс остановлен."
                 _log_migration_step("Критическая ошибка", error_msg, "critical")
@@ -1162,7 +1161,7 @@ def run_migrations(session) -> List[str]:
             f"Общее время: {total_time:.2f} мс"
         )
         
-        logger.debug(f"=== ЗАВЕРШЕНИЕ run_migrations (успешно) ===")
+        logger.debug("=== ЗАВЕРШЕНИЕ run_migrations (успешно) ===")
         return applied_migrations
         
     except Exception as e:
@@ -1189,7 +1188,7 @@ def run_migrations(session) -> List[str]:
                 logger.error(f"  Не удалось установить флаг ошибки: {flag_error}")
         
         # Пробрасываем исключение дальше
-        logger.debug(f"=== ЗАВЕРШЕНИЕ run_migrations (исключение) ===")
+        logger.debug("=== ЗАВЕРШЕНИЕ run_migrations (исключение) ===")
         raise MigrationError(f"Процесс миграций завершен с ошибкой: {str(e)}") from e
     
     finally:
@@ -1212,7 +1211,7 @@ def check_migrations_status(session) -> Tuple[bool, str, List[str]]:
     Проверяет статус миграций без их выполнения.
     Использует кэш для избежания лишних запросов к БД.
     """
-    logger.debug(f"=== ПРОВЕРКА СТАТУСА МИГРАЦИЙ ===")
+    logger.debug("=== ПРОВЕРКА СТАТУСА МИГРАЦИЙ ===")
     
     global migration_status_cache
     
@@ -1273,7 +1272,7 @@ def is_migration_complete(session) -> bool:
     Проверяет, завершены ли все миграции.
     Использует кэш для избежания лишних запросов к БД.
     """
-    logger.debug(f"=== ПРОВЕРКА is_migration_complete ===")
+    logger.debug("=== ПРОВЕРКА is_migration_complete ===")
     
     global migration_status_cache
     
@@ -1323,7 +1322,7 @@ def get_migration_status(session) -> Dict:
     """
     Возвращает детальный статус миграций в виде словаря
     """
-    logger.debug(f"=== ПОЛУЧЕНИЕ ДЕТАЛЬНОГО СТАТУСА МИГРАЦИЙ ===")
+    logger.debug("=== ПОЛУЧЕНИЕ ДЕТАЛЬНОГО СТАТУСА МИГРАЦИЙ ===")
     
     try:
         status_data = _get_migration_status_data(session)
@@ -1385,7 +1384,7 @@ def verify_all_migrations() -> Dict[str, bool]:
     Проверяет подписи всех файлов миграций без их применения.
     Возвращает словарь {имя_файла: результат_проверки}
     """
-    logger.debug(f"=== ПРОВЕРКА ВСЕХ МИГРАЦИЙ ===")
+    logger.debug("=== ПРОВЕРКА ВСЕХ МИГРАЦИЙ ===")
     
     results = {}
     migration_files = get_migration_files()
@@ -1424,7 +1423,7 @@ def get_verification_cache_info() -> Dict[str, Any]:
     """
     Возвращает информацию о кэше проверенных подписей
     """
-    logger.debug(f"=== ПОЛУЧЕНИЕ ИНФОРМАЦИИ О КЭШЕ ПОДПИСЕЙ ===")
+    logger.debug("=== ПОЛУЧЕНИЕ ИНФОРМАЦИИ О КЭШЕ ПОДПИСЕЙ ===")
     
     result = {
         'cached_migrations': list(verified_migrations_cache),
@@ -1442,7 +1441,7 @@ def clear_verification_cache() -> None:
     Очищает кэш проверенных подписей
     """
     global verified_migrations_cache
-    logger.debug(f"=== ОЧИСТКА КЭША ПОДПИСЕЙ ===")
+    logger.debug("=== ОЧИСТКА КЭША ПОДПИСЕЙ ===")
     logger.debug(f"  Текущий размер кэша: {len(verified_migrations_cache)}")
     logger.debug(f"  Содержимое кэша: {verified_migrations_cache}")
     

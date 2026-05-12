@@ -173,7 +173,7 @@ def _start_health_check():
             _health_check_timer = threading.Timer(_health_check_interval, _health_check_worker)
             _health_check_timer.daemon = True
             _health_check_timer.start()
-            logger.debug(f"Запущена фоновая проверка доступности сервиса конфигураций")
+            logger.debug("Запущена фоновая проверка доступности сервиса конфигураций")
 
 
 def _stop_health_check():

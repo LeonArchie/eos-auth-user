@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 # Copyright (C) 2025 Петунин Лев Михайлович
 
-import os
 import json
 import logging
 import time
@@ -27,7 +26,7 @@ from contextlib import contextmanager
 # Импорт модулей конфигурации
 from maintenance.configurations.get_env_config import get_env_config
 from maintenance.configurations.get_global_config import get_global_config, SERVER_ERROR, DATA_ERROR
-from maintenance.flag_state import get_flag_state, set_db_flag, get_global_flag
+from maintenance.flag_state import get_flag_state, set_db_flag
 from maintenance.wait_for_flag import wait_for_global_flag  # Импортируем новую функцию
 
 # Настройка логгера
@@ -474,7 +473,7 @@ def initialize_database() -> None:
     connector = get_db_connector()
     try:
         connector.initialize()
-    except SystemExit as e:
+    except SystemExit:
         # Пробрасываем SystemExit дальше
         raise
     except Exception as e:

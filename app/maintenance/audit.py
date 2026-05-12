@@ -110,7 +110,7 @@ def audit(object_id: str, initiator_id: str, message: str) -> None:
 # Инициализация модуля при импорте
 try:
     _ensure_initialized()
-except Exception:
+except Exception:  # nosec B110 - ленивая инициализация, ошибка проявится при первом вызове
     # Подавляем ошибки инициализации при импорте, чтобы не ломать приложение
     # Ошибки проявятся при первом вызове audit()
     pass
