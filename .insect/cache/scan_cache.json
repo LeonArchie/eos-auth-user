@@ -1,0 +1,975 @@
+{
+  "version": 1,
+  "last_scan": "2026-05-12T23:39:20.787608",
+  "file_hashes": {
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\README.md": {
+      "hash": "a942ead89ab4a167382abbd5c69165ea5c4e3f85a1402a17a211f7bebe9be2ba",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.723729"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt": {
+      "hash": "5d33e6af51f9d03782f0c8bea62f3b04e09b16f6ca0d7bb7aa3c3eeab64a31aa",
+      "mtime": 1778618086.402239,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.724058"
+        },
+        "config": {
+          "findings": [
+            {
+              "id": "PIP001-0bb166a8",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 1,
+                "line_end": 1,
+                "column_start": 0,
+                "column_end": 12,
+                "snippet": "Flask>=3.1.3\ngunicorn>=24.1.0\nWerkzeug>=3.1.3\nrequests>=2.33.1"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535804",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-5e7b0090",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 2,
+                "line_end": 2,
+                "column_start": 0,
+                "column_end": 16,
+                "snippet": "Flask>=3.1.3\ngunicorn>=24.1.0\nWerkzeug>=3.1.3\nrequests>=2.33.1\npython-dotenv>=1.2.2"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535813",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-c1c768ae",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 3,
+                "line_end": 3,
+                "column_start": 0,
+                "column_end": 15,
+                "snippet": "Flask>=3.1.3\ngunicorn>=24.1.0\nWerkzeug>=3.1.3\nrequests>=2.33.1\npython-dotenv>=1.2.2\nSQLAlchemy>=2.0.49"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535818",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-0967c24e",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 4,
+                "line_end": 4,
+                "column_start": 0,
+                "column_end": 16,
+                "snippet": "Flask>=3.1.3\ngunicorn>=24.1.0\nWerkzeug>=3.1.3\nrequests>=2.33.1\npython-dotenv>=1.2.2\nSQLAlchemy>=2.0.49\npsycopg2-binary>=2.9.12"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535821",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-ff287304",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 5,
+                "line_end": 5,
+                "column_start": 0,
+                "column_end": 20,
+                "snippet": "gunicorn>=24.1.0\nWerkzeug>=3.1.3\nrequests>=2.33.1\npython-dotenv>=1.2.2\nSQLAlchemy>=2.0.49\npsycopg2-binary>=2.9.12\nalembic>=1.18.4"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535825",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-4aa8893e",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 6,
+                "line_end": 6,
+                "column_start": 0,
+                "column_end": 18,
+                "snippet": "Werkzeug>=3.1.3\nrequests>=2.33.1\npython-dotenv>=1.2.2\nSQLAlchemy>=2.0.49\npsycopg2-binary>=2.9.12\nalembic>=1.18.4\ngreenlet>=3.5.0"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535828",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-24a94f2b",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 7,
+                "line_end": 7,
+                "column_start": 0,
+                "column_end": 23,
+                "snippet": "requests>=2.33.1\npython-dotenv>=1.2.2\nSQLAlchemy>=2.0.49\npsycopg2-binary>=2.9.12\nalembic>=1.18.4\ngreenlet>=3.5.0\nMako>=1.3.12"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535831",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-f6d6e402",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 8,
+                "line_end": 8,
+                "column_start": 0,
+                "column_end": 15,
+                "snippet": "python-dotenv>=1.2.2\nSQLAlchemy>=2.0.49\npsycopg2-binary>=2.9.12\nalembic>=1.18.4\ngreenlet>=3.5.0\nMako>=1.3.12\nMarkupSafe>=3.0.3"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535834",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-089cbc4a",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 9,
+                "line_end": 9,
+                "column_start": 0,
+                "column_end": 15,
+                "snippet": "SQLAlchemy>=2.0.49\npsycopg2-binary>=2.9.12\nalembic>=1.18.4\ngreenlet>=3.5.0\nMako>=1.3.12\nMarkupSafe>=3.0.3\ntyping-extensions>=4.15.0"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535837",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-945a878f",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 10,
+                "line_end": 10,
+                "column_start": 0,
+                "column_end": 12,
+                "snippet": "psycopg2-binary>=2.9.12\nalembic>=1.18.4\ngreenlet>=3.5.0\nMako>=1.3.12\nMarkupSafe>=3.0.3\ntyping-extensions>=4.15.0\npyyaml>=6.0.3"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535840",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-05da4965",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 11,
+                "line_end": 11,
+                "column_start": 0,
+                "column_end": 17,
+                "snippet": "alembic>=1.18.4\ngreenlet>=3.5.0\nMako>=1.3.12\nMarkupSafe>=3.0.3\ntyping-extensions>=4.15.0\npyyaml>=6.0.3\ncryptography>=48.0.0"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535843",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-e4115ecb",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 12,
+                "line_end": 12,
+                "column_start": 0,
+                "column_end": 25,
+                "snippet": "greenlet>=3.5.0\nMako>=1.3.12\nMarkupSafe>=3.0.3\ntyping-extensions>=4.15.0\npyyaml>=6.0.3\ncryptography>=48.0.0"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535846",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-f0553065",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 13,
+                "line_end": 13,
+                "column_start": 0,
+                "column_end": 13,
+                "snippet": "Mako>=1.3.12\nMarkupSafe>=3.0.3\ntyping-extensions>=4.15.0\npyyaml>=6.0.3\ncryptography>=48.0.0"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535848",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP001-5b2f97e7",
+              "title": "Unscoped dependency version",
+              "description": "Using '>=', '<=', or '*' can lead to unexpected breaking changes.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 14,
+                "line_end": 14,
+                "column_start": 0,
+                "column_end": 20,
+                "snippet": "MarkupSafe>=3.0.3\ntyping-extensions>=4.15.0\npyyaml>=6.0.3\ncryptography>=48.0.0"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535851",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP001"
+              ],
+              "metadata": {},
+              "remediation": "Pin dependencies to specific versions: package==1.2.3",
+              "cwe_id": "CWE-1104",
+              "cvss_score": 5.0
+            },
+            {
+              "id": "PIP003-4cf87e8c",
+              "title": "Potentially dangerous package",
+              "description": "Package with potentially dangerous capabilities.",
+              "severity": "high",
+              "type": "suspicious",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\requirements.txt",
+                "line_start": 14,
+                "line_end": 14,
+                "column_start": 0,
+                "column_end": 20,
+                "snippet": "MarkupSafe>=3.0.3\ntyping-extensions>=4.15.0\npyyaml>=6.0.3\ncryptography>=48.0.0"
+              },
+              "analyzer": "config",
+              "confidence": 0.8,
+              "created_at": "2026-05-12T23:29:06.535859",
+              "references": [
+                "https://pip.pypa.io/en/stable/reference/requirements-file-format/"
+              ],
+              "tags": [
+                "python",
+                "pip",
+                "dependency",
+                "security",
+                "PIP003"
+              ],
+              "metadata": {},
+              "remediation": "Review if these packages are necessary and ensure they're used securely.",
+              "cwe_id": "CWE-676",
+              "cvss_score": 6.5
+            }
+          ],
+          "timestamp": "2026-05-12T23:29:06.535978"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\app.py": {
+      "hash": "839f39622ac98a4c03612ef60a94c3d99267b7b2e7e8ed6b2014948d93dfc99a",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.724293"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\global.conf": {
+      "hash": "2a32490be5c227bf6819118aa8b3185d1da35dc92d98cb7c7bc659790f62ba4e",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.724570"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\schemas.yaml": {
+      "hash": "173a18e69836206755de3f34457324ed3cb4e50908baf6fc08721ea3301bb684",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.725215"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.784360"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\api\\OpenAPI.yaml": {
+      "hash": "a189503e45ff86f013df5b656d4121e52c999b167bb83f3d8b82a724f3bb7e1c",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.725490"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.785070"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\error_handlers.py": {
+      "hash": "ca463468c1f9a3ed4dceb4211a3b11721103084462733b1f26ae339f8614967c",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.726376"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\gate.py": {
+      "hash": "161b374974a5989dbda7d498f11f500d86026595e1a495937ccd72e7d0f6fb4b",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.733685"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\incoming_logger.py": {
+      "hash": "ee4a4b6a0bcb4b15cc0a5ec5a2656a6c0c4cb35b12fa08bca0a1278593251cef",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.736241"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\module_id_injector.py": {
+      "hash": "47c56d220d86711a3e2c00ff75455da606aa1c8a7cd56dfbaff1d757a6b4d6a1",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.738179"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\outgoing_logger.py": {
+      "hash": "1c258e70d1474bb111551a47122344544d4dcd371584f2c9fc72059d0413cf24",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.739947"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\rqid_injector.py": {
+      "hash": "ebe24d84cc077d5d246be8b25ef302b6ca2d85c69bbc80fe781c4652044cb877",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.740977"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\k8s\\healthz.py": {
+      "hash": "90b8b07320b3fbfd56486badf93f1b7ace9b562d082c4e57dd0225b69068e3e7",
+      "mtime": 1778405504.5628972,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.742161"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\k8s\\readyz.py": {
+      "hash": "81db02529b0793a12c8f02f1fba5477a4f5368f39bee4c41021ec9d592cf6d8e",
+      "mtime": 1778405504.5628972,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.743820"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\app_blueprint.py": {
+      "hash": "6ff1d230049d7c1fcb62f8ff8a1e9f77780b5d512ce7403638ebe9ffc0e21789",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.744275"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\app_init.py": {
+      "hash": "e95e7aac05219c03f866e7ead39838ce74cf7fb64f4c623a90087a14a53e0d45",
+      "mtime": 1778405504.5628972,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.745531"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\audit.py": {
+      "hash": "ec2628d5d024a11385cd98f6c29b12a206911c22c761334349ff5b85d55a9d72",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.746814"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\database_connector.py": {
+      "hash": "5113c68dddcac5cc5a8163f86e0308cca96cbd8cb3da074ebf76a4e9b36c8cce",
+      "mtime": 1778405504.5660932,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.752743"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\flag_state.py": {
+      "hash": "ab387d3d4df911d72b6169a24cd3950bd3e71b9542664644bb64a05b8bae6c68",
+      "mtime": 1778405504.5660932,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.754097"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\global_flags.py": {
+      "hash": "81e3bb6e0cb7a655fd267f0d0cd11162718d4a6a7f85c3631659e5dc31d32370",
+      "mtime": 1778405504.5660932,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.755132"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\logging_config.py": {
+      "hash": "27ed4d92202380aef855390a614624df9df9785558d170e66333241ba9d1575a",
+      "mtime": 1778405504.5670981,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.756738"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\migration.py": {
+      "hash": "3de76a99608ec5239c727b622f01e4786b824c58b3818016f74612860c2e80bd",
+      "mtime": 1778405504.5670981,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.773673"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\valid_regular_expressions.py": {
+      "hash": "5fda4b363dfa7e069c4fbb18550e6b0909ec20a4d31a6118833ce0d0d2e5d349",
+      "mtime": 1778405504.5670981,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.774351"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\wait_for_flag.py": {
+      "hash": "d9dfd96315ce04b6f553bd51de401bde795d17d5d8adaa6f1705da610358e85d",
+      "mtime": 1778405504.5680988,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.776110"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\configurations\\get_env_config.py": {
+      "hash": "5b819a82dbf1123ed279607c6250e1a8876e5729dc357b4d4dc7f6f84b437570",
+      "mtime": 1778405504.5628972,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.777050"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\configurations\\get_global_config.py": {
+      "hash": "df21dd050eab853eb4b887ec00374e330481e8f63852a54cb45113d159dc0524",
+      "mtime": 1778405504.5638971,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.779202"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\configurations\\get_local_config.py": {
+      "hash": "b87a65cc48b52aafb5b115444477d26643c927dda53abeb12bc881faf9a09a94",
+      "mtime": 1778405504.5660932,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.780741"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\migrations\\001-initial-tables.sql": {
+      "hash": "5c3b3d63f732ebaa3ada2fece61f9b2cfe4aa237be7ab36ddc4057fd5b632fbc",
+      "mtime": 1778405504.5680988,
+      "analyzers": {
+        "secrets": {
+          "findings": [
+            {
+              "id": "SECRET-HIGH_ENTROPY",
+              "title": "High-entropy string detected",
+              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 5.42\nDetected value: MEUCIQCjxMs7KOMNLHts...",
+              "severity": "medium",
+              "type": "secret",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\migrations\\001-initial-tables.sql",
+                "line_start": 1,
+                "line_end": null,
+                "column_start": 13,
+                "column_end": null,
+                "snippet": null
+              },
+              "analyzer": "secrets",
+              "confidence": 1.0,
+              "created_at": "2026-05-12T23:29:06.514539",
+              "references": [],
+              "tags": [],
+              "metadata": {
+                "secret_type": "High Entropy",
+                "entropy": 5.421954787265485,
+                "length": 96,
+                "pattern_match": false,
+                "is_base64": true,
+                "is_hex": false
+              },
+              "remediation": null,
+              "cwe_id": null,
+              "cvss_score": null
+            }
+          ],
+          "timestamp": "2026-05-12T23:29:06.514672"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\migrations\\002-triggers.sql": {
+      "hash": "ef27974b131a10709d3bcc24d81d51cea435b6a253c70fa2a853ffdb8b4f769d",
+      "mtime": 1778405504.569098,
+      "analyzers": {
+        "secrets": {
+          "findings": [
+            {
+              "id": "SECRET-HIGH_ENTROPY",
+              "title": "High-entropy string detected",
+              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 5.58\nDetected value: MEUCIDbIouoBhYZtYqiH...",
+              "severity": "high",
+              "type": "secret",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\migrations\\002-triggers.sql",
+                "line_start": 1,
+                "line_end": null,
+                "column_start": 13,
+                "column_end": null,
+                "snippet": null
+              },
+              "analyzer": "secrets",
+              "confidence": 1.0,
+              "created_at": "2026-05-12T23:29:06.521207",
+              "references": [],
+              "tags": [],
+              "metadata": {
+                "secret_type": "High Entropy",
+                "entropy": 5.584555208874202,
+                "length": 96,
+                "pattern_match": false,
+                "is_base64": true,
+                "is_hex": false
+              },
+              "remediation": null,
+              "cwe_id": null,
+              "cvss_score": null
+            }
+          ],
+          "timestamp": "2026-05-12T23:29:06.521355"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\migrations\\003-all-privileges.sql": {
+      "hash": "58d33581c34e8ef99ec58317b9ab46e21cd611f6f18d8cb90f59caf28cda99a4",
+      "mtime": 1778405504.569098,
+      "analyzers": {
+        "secrets": {
+          "findings": [
+            {
+              "id": "SECRET-HIGH_ENTROPY",
+              "title": "High-entropy string detected",
+              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 5.57\nDetected value: MEUCIDfYVFHrLFd98GwY...",
+              "severity": "high",
+              "type": "secret",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\migrations\\003-all-privileges.sql",
+                "line_start": 1,
+                "line_end": null,
+                "column_start": 13,
+                "column_end": null,
+                "snippet": null
+              },
+              "analyzer": "secrets",
+              "confidence": 1.0,
+              "created_at": "2026-05-12T23:29:06.523060",
+              "references": [],
+              "tags": [],
+              "metadata": {
+                "secret_type": "High Entropy",
+                "entropy": 5.568828385912465,
+                "length": 96,
+                "pattern_match": false,
+                "is_base64": true,
+                "is_hex": false
+              },
+              "remediation": null,
+              "cwe_id": null,
+              "cvss_score": null
+            }
+          ],
+          "timestamp": "2026-05-12T23:29:06.523164"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\migrations\\developers_keys.py": {
+      "hash": "cdd01037bb6c3ddab00a8b7d9ae986607d756c9dfff1823a133583cf838d1ceb",
+      "mtime": 1778405504.569098,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.781281"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\k8s\\deployment.yaml": {
+      "hash": "c183802aa6b83165c20f33130624d361aed06358242dcc42ea3faaebffdfb249",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.781992"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.786916"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\k8s\\service.yaml": {
+      "hash": "1bbf57e00658f91480f562d30526cda0af59f2063b2d24d27224caed7f28f215",
+      "mtime": 1778353734.952109,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.782327"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-12T23:39:20.787606"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\Dockerfile": {
+      "hash": "b5097a107ade7038ea3e0cc3dfe833e93293f0a498ffcd23d02d3c6b4d7202dc",
+      "mtime": 1778415544.1780806,
+      "analyzers": {
+        "config": {
+          "findings": [
+            {
+              "id": "DOCKER003-1496bbfd",
+              "title": "No USER instruction (running as root)",
+              "description": "No USER instruction found, container will run as root by default.",
+              "severity": "medium",
+              "type": "misconfig",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\Dockerfile",
+                "line_start": 1,
+                "line_end": 1,
+                "column_start": null,
+                "column_end": null,
+                "snippet": "# \u0418\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0435\u043c \u043c\u043d\u043e\u0433\u043e\u044d\u0442\u0430\u043f\u043d\u0443\u044e \u0441\u0431\u043e\u0440\u043a\u0443\n# \u042d\u0442\u0430\u043f \u0441\u0431\u043e\u0440\u043a\u0438\nFROM python:3.14.4-slim as builder\n\nWORKDIR /\n\nRUN apt-get update && \\"
+              },
+              "analyzer": "config",
+              "confidence": 0.9,
+              "created_at": "2026-05-12T23:29:06.535526",
+              "references": [
+                "https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#user"
+              ],
+              "tags": [
+                "docker",
+                "container",
+                "security",
+                "DOCKER003"
+              ],
+              "metadata": {},
+              "remediation": "Add a USER instruction to run as a non-privileged user.",
+              "cwe_id": "CWE-250",
+              "cvss_score": 6.0
+            }
+          ],
+          "timestamp": "2026-05-12T23:29:06.535682"
+        }
+      }
+    }
+  }
+}
