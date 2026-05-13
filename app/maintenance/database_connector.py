@@ -127,12 +127,23 @@ class DatabaseConnector:
             # Настраиваем Flask-SQLAlchemy
             app.config['SQLALCHEMY_DATABASE_URI'] = connection_string
             app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+            
+            # Обрабатываем pool_pre_ping - может быть строкой или булевым значением
+            pool_pre_ping = db_config['pool_pre_ping']
+            if isinstance(pool_pre_ping, bool):
+                pool_pre_ping_value = pool_pre_ping
+            elif isinstance(pool_pre_ping, str):
+                pool_pre_ping_value = pool_pre_ping.lower() == 'true'
+            else:
+                pool_pre_ping_value = False
+                logger.warning(f"Неизвестный тип pool_pre_ping: {type(pool_pre_ping)}, используется False")
+            
             app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
                 'pool_size': int(db_config['pool_size']),
                 'max_overflow': int(db_config['max_overflow']),
                 'pool_timeout': int(db_config['pool_timeout']),
                 'pool_recycle': int(db_config['pool_recycle']),
-                'pool_pre_ping': db_config['pool_pre_ping'].lower() == 'true',
+                'pool_pre_ping': pool_pre_ping_value,
             }
             
             self._app = app
