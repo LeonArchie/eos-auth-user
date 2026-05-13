@@ -1,22 +1,17 @@
+# maintenance/app_init.py
 # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 # Copyright (C) 2025 Петунин Лев Михайлович
 
-import threading
 import sys
 from flask import Flask
 
 from handlers.gate import init_gate
-from handlers.module_id_injector import ModuleIDInjector
-from handlers.rqid_injector import RQIDInjector
 from handlers.incoming_logger import IncomingRequestLogger
 from handlers.outgoing_logger import OutgoingRequestLogger
 from maintenance.logging_config import setup_logging
-from maintenance.database_connector import initialize_database, get_database_flag
-from maintenance.migration import run_migrations
+from maintenance.database_connector import initialize_database, is_database_initialized
 from maintenance.app_blueprint import register_blueprints, register_error_handlers
-from maintenance.global_flags import (get_all_flags,
-    update_app_config_with_flags, init_all_flags)
-from maintenance.wait_for_flag import wait_for_global_flag  # Импортируем функцию
+from maintenance.configurations.get_env_config import get_env_config
 
 logger = setup_logging()
 
@@ -24,96 +19,65 @@ logger = setup_logging()
 def create_app():
     """Создание и инициализация Flask приложения"""
     app = Flask(__name__)
-    
-    # Инициализация флагов при запуске
-    init_all_flags()
-    
-    # Сохраняем флаги в конфигурации Flask для обратной совместимости
-    update_app_config_with_flags(app)
-    
-    logger.info(f"Статус конфигураций: {get_all_flags()}")
+
+    # Настройка базы данных
+    database_user = get_env_config('DATABASE_USER')
+    database_password = get_env_config('DB_PASSWORD')
+    database_host = get_env_config('DATABASE_HOST', default='localhost')
+    database_port = get_env_config('DATABASE_PORT', default='5432')
+    database_name = get_env_config('DATABASE_NAME', default='postgres')
+
+    app.config['SQLALCHEMY_DATABASE_URI'] = (
+        f"postgresql://{database_user}:{database_password}@"
+        f"{database_host}:{database_port}/{database_name}"
+    )
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_size': 10,
+        'pool_recycle': 3600,
+        'pool_pre_ping': True,
+    }
 
     # Инициализация логгеров
     incoming_logger = IncomingRequestLogger(app)
     outgoing_logger = OutgoingRequestLogger()
-    
-    # Сохраняем логгеры в конфигурации приложения для доступа из других модулей
+
     app.config['INCOMING_LOGGER'] = incoming_logger
     app.config['OUTGOING_LOGGER'] = outgoing_logger
-    
-    # ИНИЦИАЛИЗАЦИЯ ШЛЮЗА - ДОЛЖНА БЫТЬ ДО ВСЕХ ДРУГИХ КОМПОНЕНТОВ
+
+    # ИНИЦИАЛИЗАЦИЯ ШЛЮЗА
     init_gate(app)
-    
+
     # Инициализация компонентов приложения
     try:
-        initialize_components()
+        initialize_components(app)
     except SystemExit:
-        # Пробрасываем SystemExit дальше
         raise
     except Exception as e:
         logger.critical(f"Критическая ошибка при инициализации компонентов: {e}")
         sys.exit(1)
-    
-    # Запуск миграций в фоновом режиме
-    start_migrations_background()
-    
-    # Регистрация blueprint'ов
-    register_blueprints(app)
 
-    # Регистрация обработчиков ошибок
+    register_blueprints(app)
     register_error_handlers(app)
-    
+
     logger.info("Приложение успешно инициализировано")
     return app
 
 
-def initialize_components():
-    """Инициализация компонентов приложения с проверкой флага глобальной конфигурации"""
+def initialize_components(app):
+    """Инициализация компонентов приложения"""
     try:
         logger.info("Инициализация базы данных...")
-        
-        # Проверяем флаг глобальной конфигурации с помощью новой функции
-        if not wait_for_global_flag(max_attempts=10, delay=10.0):
-            logger.critical("Глобальный сервис конфигураций недоступен, невозможно инициализировать БД")
+        initialize_database(app)
+
+        if not is_database_initialized():
+            logger.critical("База данных не инициализирована")
             sys.exit(1)
-        
-        # Пытаемся инициализировать БД
-        initialize_database()
-        
-        # Проверяем, что БД действительно инициализирована
-        db_flag = get_database_flag()
-        if db_flag != 1:
-            logger.critical(f"База данных не инициализирована (флаг = {db_flag})")
-            sys.exit(1)
-        
+
         logger.info("База данных успешно инициализирована")
-        
+
     except SystemExit:
-        # Пробрасываем SystemExit дальше
         raise
     except Exception as e:
         logger.critical(f"Ошибка инициализации базы данных: {e}")
         sys.exit(1)
-
-
-def start_migrations_background():
-    """Запуск миграций в фоновом режиме"""
-    def run_migrations_background():
-        try:
-            # Проверяем, что БД доступна перед запуском миграций
-            db_flag = get_database_flag()
-            if db_flag != 1:
-                logger.error("База данных недоступна, миграции не будут выполнены")
-                return
-            
-            logger.info("Запуск миграций базы данных...")
-            applied_migrations = run_migrations()
-            if applied_migrations:
-                logger.info(f"Миграции успешно применены: {applied_migrations}")
-            else:
-                logger.info("Нет новых миграций для применения")
-        except Exception as e:
-            logger.error(f"Ошибка выполнения миграций: {e}")
-
-    migration_thread = threading.Thread(target=run_migrations_background, daemon=True)
-    migration_thread.start()

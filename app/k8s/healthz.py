@@ -1,99 +1,77 @@
 # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 # Copyright (C) 2025 Петунин Лев Михайлович
 
-# Импорт необходимых модулей
 from flask import Blueprint, jsonify
 import logging
 
-# Импорт для получения флагов
-from maintenance.flag_state import get_env_flag, get_local_flag, get_global_flag
+# Импорт для проверки конфигурации
+from maintenance.configurations.get_env_config import check_env_file_exists
+from maintenance.configurations.get_local_config import check_local_config_exists
+from maintenance.configurations.get_global_config import check_global_config_available
 
-# Создаем логгер для текущего модуля
 logger = logging.getLogger(__name__)
 
-# Создаем Blueprint для healthcheck-эндпоинтов
 healthz_bp = Blueprint('healthz', __name__)
 
-def _check_critical_flags():
+
+def _check_critical_components():
     """
-    Проверка критических флагов для liveness пробы:
-    - FLAG_GET_ENV: наличие .env файла
-    - FLAG_GET_LOCAL: наличие global.conf файла
-    - FLAG_GET_GLOBAL: доступность глобального сервиса конфигураций
-    
+    Проверка критических компонентов для liveness пробы:
+    - .env файл
+    - global.conf файл
+    - глобальный сервис конфигураций
+
     Returns:
         tuple: (успех, список проблем)
     """
     issues = []
-    
-    # Проверяем флаг FLAG_GET_ENV
-    env_flag = get_env_flag()
-    if env_flag != 1:
-        issues.append(f"FLAG_GET_ENV={env_flag} (ожидается 1)")
-        logger.warning(f"FLAG_GET_ENV = {env_flag} (ожидается 1)")
-    
-    # Проверяем флаг FLAG_GET_LOCAL
-    local_flag = get_local_flag()
-    if local_flag != 1:
-        issues.append(f"FLAG_GET_LOCAL={local_flag} (ожидается 1)")
-        logger.warning(f"FLAG_GET_LOCAL = {local_flag} (ожидается 1)")
-    
-    # Проверяем флаг FLAG_GET_GLOBAL
-    global_flag = get_global_flag()
-    if global_flag != 1:
-        issues.append(f"FLAG_GET_GLOBAL={global_flag} (ожидается 1)")
-        logger.warning(f"FLAG_GET_GLOBAL = {global_flag} (ожидается 1)")
-    
+
+    # Проверяем .env файл
+    env_exists = check_env_file_exists()
+    if not env_exists:
+        issues.append(".env файл отсутствует")
+
+    # Проверяем global.conf файл
+    local_exists = check_local_config_exists()
+    if not local_exists:
+        issues.append("global.conf файл отсутствует")
+
+    # Проверяем доступность глобального сервиса конфигураций
+    global_available = check_global_config_available()
+    if not global_available:
+        issues.append("Глобальный сервис конфигураций недоступен")
+
     return len(issues) == 0, issues
 
-# Декорируем функцию для обработки GET-запросов по пути '/healthz'
+
 @healthz_bp.route('/healthz', methods=['GET'])
 def healthz():
     """
     Liveness проба для Kubernetes.
     Проверяет, что сервис жив и может функционировать.
-    
-    Возвращает:
-        200 OK: если все критические флаги установлены в 1
-        503 Service Unavailable: если хотя бы один критический флаг не равен 1
+
+    Returns:
+        200 OK: если все критические компоненты доступны
+        503 Service Unavailable: если хотя бы один компонент недоступен
     """
     logger.debug("Проверка liveness (живости) сервиса")
-    
-    # Проверяем критические флаги
-    all_flags_ok, issues = _check_critical_flags()
-    
-    # Формируем ответ
-    if all_flags_ok:
-        response_data = {
-            "status": True,
-            "message": "Service is alive",
-            "flags": {
-                "FLAG_GET_ENV": get_env_flag(),
-                "FLAG_GET_LOCAL": get_local_flag(),
-                "FLAG_GET_GLOBAL": get_global_flag()
-            }
-        }
-        logger.debug("Liveness проверка успешна: все критические флаги = 1")
-        return jsonify(response_data), 200
-    else:
-        response_data = {
-            "status": False,
-            "message": "Service is not alive",
-            "issues": issues,
-            "flags": {
-                "FLAG_GET_ENV": get_env_flag(),
-                "FLAG_GET_LOCAL": get_local_flag(),
-                "FLAG_GET_GLOBAL": get_global_flag()
-            }
-        }
-        logger.warning(f"Liveness проверка не пройдена: {', '.join(issues)}")
-        return jsonify(response_data), 503  # Service Unavailable
 
-# Примечания:
-# 1. Этот эндпоинт проверяет "живость" сервиса (liveness probe)
-# 2. Kubernetes перезапускает контейнер если /healthz возвращает ошибку
-# 3. Проверки должны быть легковесными и быстрыми
-# 4. Критические флаги: 
-#    - FLAG_GET_ENV = 1: .env файл существует
-#    - FLAG_GET_LOCAL = 1: global.conf файл существует
-#    - FLAG_GET_GLOBAL = 1: сервис глобальных конфигураций доступен
+    all_ok, issues = _check_critical_components()
+
+    response_data = {
+        "status": all_ok,
+        "message": "Service is alive" if all_ok else "Service is not alive",
+        "checks": {
+            "env_file": check_env_file_exists(),
+            "local_config": check_local_config_exists(),
+            "global_config": check_global_config_available()
+        }
+    }
+
+    if not all_ok:
+        response_data["issues"] = issues
+        logger.warning(f"Liveness проверка не пройдена: {', '.join(issues)}")
+        return jsonify(response_data), 503
+
+    logger.debug("Liveness проверка успешна")
+    return jsonify(response_data), 200
