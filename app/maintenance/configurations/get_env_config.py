@@ -1,7 +1,7 @@
+# maintenance/configurations/get_env_config.py
 # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 # Copyright (C) 2025 Петунин Лев Михайлович
 
-import sys
 import logging
 from typing import Optional
 from pathlib import Path
@@ -64,7 +64,7 @@ def get_env_config(param_name: str, default: Optional[str] = None) -> Optional[s
                         logger.debug(f"Найден параметр {param_name}: {value[:10] if value else ''}...")
                         return value
 
-        logger.debug(f"Параметр {param_name} не найден в .env файле, возвращаю значение по умолчанию: {default}")
+        logger.debug(f"Параметр {param_name} не найден, возвращаю значение по умолчанию: {default}")
         return default
 
     except Exception as e:

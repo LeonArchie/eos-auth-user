@@ -1,7 +1,7 @@
+# maintenance/configurations/get_local_config.py
 # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 # Copyright (C) 2025 Петунин Лев Михайлович
 
-import sys
 import logging
 from pathlib import Path
 from typing import Optional, Dict, Any

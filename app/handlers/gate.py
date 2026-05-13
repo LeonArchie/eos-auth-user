@@ -245,7 +245,6 @@ def validate_headers_exact(expected_headers: List[Dict], request_headers) -> boo
         expected_pairs[name].append(value)
 
     found_match = False
-    matched_pair = None
 
     for header_name in request_headers.keys():
         header_name_lower = header_name.lower()
@@ -256,10 +255,9 @@ def validate_headers_exact(expected_headers: List[Dict], request_headers) -> boo
 
             if actual_value in expected_values:
                 if found_match:
-                    logger.warning(f"Найдено второе совпадение: заголовок {header_name}={actual_value}")
+                    logger.warning(f"Найдено второе совпадение для заголовка {header_name}={actual_value}")
                     return False
                 found_match = True
-                matched_pair = f"{header_name}={actual_value}"
             else:
                 logger.warning(f"Заголовок {header_name} имеет неверное значение: '{actual_value}'")
                 return False
@@ -326,7 +324,8 @@ def extract_request_body() -> Dict:
     elif request.data:
         try:
             return json.loads(request.data.decode('utf-8'))
-        except:
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            logger.debug(f"Не удалось распарсить сырые данные как JSON: {e}")
             return {}
     else:
         return {}
