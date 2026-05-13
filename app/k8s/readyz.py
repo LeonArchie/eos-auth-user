@@ -3,123 +3,87 @@
 
 from flask import Blueprint, jsonify
 import logging
-import os
 
-# Импорт модулей для проверки БД
 from maintenance.database_connector import is_database_healthy, is_database_initialized
-# Импорт модуля миграций
-from maintenance.migration import is_migration_complete, check_migrations_status
-# Импорт функции проверки готовности сервиса конфигураций
-from maintenance.config_read import is_config_service_ready
+from maintenance.configurations.get_env_config import check_env_file_exists
+from maintenance.configurations.get_local_config import check_local_config_exists
+from maintenance.configurations.get_global_config import check_global_config_available
 
 logger = logging.getLogger(__name__)
+
 readyz_bp = Blueprint('readyz', __name__)
 
-def _check_config_service_readiness():
-    """
-    Проверка готовности сервиса конфигураций через config_read
-    """
-    try:
-        is_ready = is_config_service_ready()
-        if is_ready:
-            logger.debug("Сервис конфигураций готов")
-            return True
-        else:
-            logger.warning("Сервис конфигураций не готов")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Ошибка при проверке готовности сервиса конфигураций: {e}")
-        return False
 
-def _check_database_readiness():
+def _check_all_components():
     """
-    Проверка готовности базы данных
-    """
-    try:
-        # Проверяем, инициализирована ли база данных
-        if not is_database_initialized():
-            logger.warning("База данных не инициализирована")
-            return False
-        
-        # Проверяем здоровье базы данных
-        if is_database_healthy():
-            logger.debug("База данных готова")
-            return True
-        else:
-            logger.warning("База данных не готова")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Ошибка при проверке готовности базы данных: {e}")
-        return False
+    Проверка всех компонентов для readiness пробы:
+    - .env файл
+    - global.conf файл
+    - глобальный сервис конфигураций
+    - база данных
 
-def _check_migrations_status():
+    Returns:
+        tuple: (успех, список проблем)
     """
-    Проверка статуса миграций базы данных
-    """
-    try:
-        # Используем только одну функцию для проверки
-        migrations_complete, status_message, pending_migrations = check_migrations_status()
-        
-        if migrations_complete:
-            logger.debug(f"Миграции базы данных завершены: {status_message}")
-            return True
-        else:
-            logger.warning(f"Миграции базы данных не завершены: {status_message}")
-            return False
-            
-    except Exception as e:
-        logger.error(f"Ошибка при проверке статуса миграций: {e}")
-        return False
+    issues = []
+
+    # Проверяем .env файл
+    env_exists = check_env_file_exists()
+    if not env_exists:
+        issues.append(".env файл отсутствует")
+
+    # Проверяем global.conf файл
+    local_exists = check_local_config_exists()
+    if not local_exists:
+        issues.append("global.conf файл отсутствует")
+
+    # Проверяем доступность глобального сервиса конфигураций
+    global_available = check_global_config_available()
+    if not global_available:
+        issues.append("Глобальный сервис конфигураций недоступен")
+
+    # Проверяем базу данных
+    db_initialized = is_database_initialized()
+    db_healthy = is_database_healthy()
+
+    if not db_initialized:
+        issues.append("База данных не инициализирована")
+    elif not db_healthy:
+        issues.append("База данных нездорова")
+
+    return len(issues) == 0, issues
+
 
 @readyz_bp.route('/readyz', methods=['GET'])
 def readyz():
-    logger.debug("Проверка готовности сервиса")
-    
-    # Проверяем готовность сервиса конфигураций
-    config_ready = _check_config_service_readiness()
-    
-    # Проверяем готовность базы данных
-    db_ready = _check_database_readiness()
-    
-    # Проверяем статус миграций
-    migrations_ready = _check_migrations_status()
-    
-    # Определяем общий статус
-    all_ready = config_ready and db_ready and migrations_ready
-    
-    # Формируем ответ
-    if all_ready:
-        response_data = {"status": True}
-        return jsonify(response_data), 200
-    else:
-        response_data = {"status": False}
-        return jsonify(response_data), 503  # Service Unavailable
-    
-# Основные принципы работы этого endpoint:
-#
-# 1. Отличие от /healthz:
-#    - /healthz проверяет "живость" сервиса (liveness)
-#    - /readyz проверяет готовность обрабатывать запросы (readiness)
-#
-# 2. Типичные сценарии использования:
-#    - Kubernetes использует для управления подами трафика
-#    - Балансировщики нагрузки для исключения/включения нод
-#    - В оркестраторах при rolling updates
-#
-# 3. В продакшн-среде следует добавить проверки:
-#    - Доступность подключений к БД
-#    - Загрузка CPU/памяти
-#    - Наличие свободного места на диске
-#    - Состояние кэшей
-#
-# 4. Оптимизации:
-#    - Минимизировать внешние зависимости проверок
-#    - Кэшировать результаты, если проверки ресурсоемкие
-#    - Добавлять timeout для внешних проверок
-#
-# 5. Безопасность:
-#    - Не должен раскрывать sensitive-информацию
-#    - Можно добавить базовую аутентификацию
-#    - Рекомендуется закрыть от публичного доступа
+    """
+    Readiness проба для Kubernetes.
+    Проверяет, что сервис готов принимать трафик.
+
+    Returns:
+        200 OK: если все необходимые компоненты доступны
+        503 Service Unavailable: если хотя бы один компонент недоступен
+    """
+    logger.debug("Проверка readiness (готовности) сервиса")
+
+    all_ok, issues = _check_all_components()
+
+    response_data = {
+        "status": all_ok,
+        "message": "Service is ready to accept traffic" if all_ok else "Service is not ready",
+        "checks": {
+            "env_file": check_env_file_exists(),
+            "local_config": check_local_config_exists(),
+            "global_config": check_global_config_available(),
+            "database_initialized": is_database_initialized(),
+            "database_healthy": is_database_healthy()
+        }
+    }
+
+    if not all_ok:
+        response_data["issues"] = issues
+        logger.warning(f"Readiness проверка не пройдена: {', '.join(issues)}")
+        return jsonify(response_data), 503
+
+    logger.debug("Readiness проверка успешна")
+    return jsonify(response_data), 200

@@ -1,3 +1,7 @@
+-- SIGNATURE: MEUCIDbIouoBhYZtYqiHU6RLqSDw94WY4s2asoLm5/lIJuz7AiEAjXyj3jSAPATey89zErGQviU0LE8wUQwkNi+MgunmleQ=
+-- SIGNED_BY: Lev Petunin <lm.petunin@sign-sql.ru>
+-- SIGNED_AT: 2026-03-03T18:16:35Z
+-- CHECKSUM: 397b2d5cc46355d21695c8f314cd19cdc4e0223484a076cb751120dde55d3200
 -- SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 -- Copyright (C) 2025 Петунин Лев Михайлович
 

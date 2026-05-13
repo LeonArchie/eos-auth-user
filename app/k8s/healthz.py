@@ -1,91 +1,77 @@
 # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
 # Copyright (C) 2025 Петунин Лев Михайлович
 
-# Импорт необходимых модулей
 from flask import Blueprint, jsonify
 import logging
 
-# Импорт для проверки БД
-from maintenance.database_connector import is_database_initialized
+# Импорт для проверки конфигурации
+from maintenance.configurations.get_env_config import check_env_file_exists
+from maintenance.configurations.get_local_config import check_local_config_exists
+from maintenance.configurations.get_global_config import check_global_config_available
 
-# Создаем логгер для текущего модуля
 logger = logging.getLogger(__name__)
 
-# Создаем Blueprint для healthcheck-эндпоинтов
 healthz_bp = Blueprint('healthz', __name__)
 
-def _check_database_connection():
-    """
-    Проверка подключения к базе данных
-    """
-    try:
-        if is_database_initialized():
-            return True
-        else:
-            return False
-    except Exception as e:
-        logger.error(f"Ошибка проверки подключения к БД: {e}")
-        return False, f"Database connection error: {str(e)}"
 
-# Декорируем функцию для обработки GET-запросов по пути '/healthz'
+def _check_critical_components():
+    """
+    Проверка критических компонентов для liveness пробы:
+    - .env файл
+    - global.conf файл
+    - глобальный сервис конфигураций
+
+    Returns:
+        tuple: (успех, список проблем)
+    """
+    issues = []
+
+    # Проверяем .env файл
+    env_exists = check_env_file_exists()
+    if not env_exists:
+        issues.append(".env файл отсутствует")
+
+    # Проверяем global.conf файл
+    local_exists = check_local_config_exists()
+    if not local_exists:
+        issues.append("global.conf файл отсутствует")
+
+    # Проверяем доступность глобального сервиса конфигураций
+    global_available = check_global_config_available()
+    if not global_available:
+        issues.append("Глобальный сервис конфигураций недоступен")
+
+    return len(issues) == 0, issues
+
+
 @healthz_bp.route('/healthz', methods=['GET'])
 def healthz():
-    logger.debug("Проверка работоспособности сервиса")
+    """
+    Liveness проба для Kubernetes.
+    Проверяет, что сервис жив и может функционировать.
 
-    # Проверяем подключение к БД
-    db_ready = _check_database_connection()
-    
-    # Формируем ответ
-    if db_ready:
-        response_data = {"status": True}
-        return jsonify(response_data), 200
-    else:
-        response_data = {"status": False}
+    Returns:
+        200 OK: если все критические компоненты доступны
+        503 Service Unavailable: если хотя бы один компонент недоступен
+    """
+    logger.debug("Проверка liveness (живости) сервиса")
+
+    all_ok, issues = _check_critical_components()
+
+    response_data = {
+        "status": all_ok,
+        "message": "Service is alive" if all_ok else "Service is not alive",
+        "checks": {
+            "env_file": check_env_file_exists(),
+            "local_config": check_local_config_exists(),
+            "global_config": check_global_config_available()
+        }
+    }
+
+    if not all_ok:
+        response_data["issues"] = issues
+        logger.warning(f"Liveness проверка не пройдена: {', '.join(issues)}")
         return jsonify(response_data), 503
 
-# Примечания:
-# 1. Этот эндпоинт проверяет "живость" сервиса (liveness)
-# 2. В отличие от /readyz, здесь проверяются базовые показатели здоровья
-# 3. Kubernetes перезапускает контейнер если /healthz возвращает ошибку
-# 4. Проверки должны быть легковесными и быстрыми
-
-# Примечания:
-# 1. Этот эндпоинт проверяет "живость" сервиса (liveness)
-# 2. В отличие от /readyz, здесь проверяются базовые показатели здоровья
-# 3. Kubernetes перезапускает контейнер если /healthz возвращает ошибку
-# 4. Проверки должны быть легковесными и быстрыми
-# Основные принципы работы этого endpoint:
-#
-# 1. Отличие от /healthz:
-#    - /healthz проверяет "живость" сервиса (liveness)
-#    - /readyz проверяет готовность обрабатывать запросы (readiness)
-#
-# 2. Типичные сценарии использования:
-#    - Kubernetes использует для управления подами трафика
-#    - Балансировщики нагрузки для исключения/включения нод
-#    - В оркестраторах при rolling updates
-#
-# 3. Проверки готовности:
-#    - Сервис конфигураций (внешняя зависимость)
-#    - База данных (критическая внутренняя зависимость)
-#    - Другие внешние сервисы при необходимости
-#
-# 4. Оптимизации:
-#    - Минимизировать внешние зависимости проверок
-#    - Кэшировать результаты, если проверки ресурсоемкие
-#    - Добавлять timeout для внешних проверок
-#
-# 5. Безопасность:
-#    - Не должен раскрывать sensitive-информацию
-#    - Можно добавить базовую аутентификацию
-#    - Рекомендуется закрыть от публичного доступа
-
-# Примечания:
-# 1. Этот эндпоинт должен быть максимально простым и быстрым, так как:
-#    - Он часто вызывается системами мониторинга (Kubernetes, Docker и др.)
-#    - Не должен зависеть от других сервисов (это проверка именно этого сервиса)
-# 2. В продакшне можно добавить проверки:
-#    - Доступности базы данных
-#    - Наличия свободного места на диске
-#    - Доступности других критичных ресурсов
-# 3. Логирование помогает отслеживать частоту проверок и выявлять проблемы
+    logger.debug("Liveness проверка успешна")
+    return jsonify(response_data), 200

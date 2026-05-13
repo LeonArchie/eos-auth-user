@@ -1,6 +1,6 @@
 # Используем многоэтапную сборку
 # Этап сборки
-FROM python:3.9-slim as builder
+FROM python:3.14-slim-bookworm as builder
 
 WORKDIR /
 
@@ -22,16 +22,13 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # ---
 # Финальный этап
-FROM python:3.9-slim
+FROM python:3.14-slim-bookworm
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    iputils-ping \
-    dnsutils \
-    iproute2 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update  && apt-get upgrade -y && apt-get install -y \
+    --no-install-recommends curl && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
     
 # Копируем виртуальное окружение
 COPY --from=builder /opt/venv /opt/venv
