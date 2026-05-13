@@ -3,7 +3,6 @@
 # Copyright (C) 2025 Петунин Лев Михайлович
 
 import requests
-import threading
 import logging
 from typing import Dict, Any
 
@@ -18,26 +17,11 @@ VALID_ERROR = "VALID_ERROR"
 # Кэш для хранения полученных значений
 _CONFIG_CACHE: Dict[str, str] = {}
 
-# Флаг доступности сервиса
-_global_service_available: bool = False
-
-# Таймер для фоновой проверки доступности сервиса
-_health_check_timer = None
-_health_check_interval = 10  # секунд
-_health_check_lock = threading.Lock()
-
 logger = logging.getLogger(__name__)
 
 
 def check_global_config_available() -> bool:
-    """Проверяет доступность глобального сервиса конфигураций"""
-    return _global_service_available
-
-
-def _check_service_health() -> bool:
-    """Проверка доступности сервиса конфигураций через /readyz endpoint"""
-    global _global_service_available
-
+    """Проверяет доступность глобального сервиса конфигураций через /readyz endpoint"""
     config_service_url = get_local_config("URL_CONFIG_MODULES")
     if not config_service_url:
         logger.error("URL_CONFIG_MODULES не найден в локальной конфигурации")
@@ -48,21 +32,9 @@ def _check_service_health() -> bool:
             f"{config_service_url}/readyz",
             timeout=3
         )
-
-        if response.status_code == 200:
-            if not _global_service_available:
-                logger.info("Сервис конфигураций стал доступен")
-                _global_service_available = True
-                _stop_health_check()
-            return True
-        else:
-            logger.error(f"Ошибка при подключении к сервису конфигураций (код {response.status_code})")
-            _global_service_available = False
-            return False
-
+        return response.status_code == 200
     except Exception as e:
-        logger.error(f"Ошибка при проверке доступности сервиса конфигураций: {e}")
-        _global_service_available = False
+        logger.debug(f"Сервис конфигураций недоступен: {e}")
         return False
 
 
@@ -120,8 +92,6 @@ def get_global_config(parameter_path: str) -> str:
 
         elif response.status_code >= 500:
             logger.error(f"Ошибка при подключении к сервису конфигураций (код {response.status_code})")
-            _global_service_available = False
-            _start_health_check()
             return SERVER_ERROR
 
         else:
@@ -130,52 +100,13 @@ def get_global_config(parameter_path: str) -> str:
 
     except requests.exceptions.ConnectionError:
         logger.error("Ошибка подключения к сервису конфигураций")
-        _global_service_available = False
-        _start_health_check()
         return SERVER_ERROR
     except requests.exceptions.Timeout:
         logger.error("Таймаут при подключении к сервису конфигураций")
-        _global_service_available = False
-        _start_health_check()
         return SERVER_ERROR
     except Exception as e:
         logger.error(f"Непредвиденная ошибка при запросе к сервису конфигураций: {e}")
-        _global_service_available = False
-        _start_health_check()
         return SERVER_ERROR
-
-
-def _health_check_worker():
-    """Фоновая задача для периодической проверки доступности сервиса"""
-    if _check_service_health():
-        # Сервис стал доступен, останавливаем проверки
-        _stop_health_check()
-    else:
-        # Сервис все еще недоступен, планируем следующую проверку
-        _start_health_check()
-
-
-def _start_health_check():
-    """Запуск фоновой проверки доступности сервиса"""
-    global _health_check_timer
-
-    with _health_check_lock:
-        if _health_check_timer is None or not _health_check_timer.is_alive():
-            _health_check_timer = threading.Timer(_health_check_interval, _health_check_worker)
-            _health_check_timer.daemon = True
-            _health_check_timer.start()
-            logger.debug("Запущена фоновая проверка доступности сервиса конфигураций")
-
-
-def _stop_health_check():
-    """Остановка фоновой проверки доступности сервиса"""
-    global _health_check_timer
-
-    with _health_check_lock:
-        if _health_check_timer:
-            _health_check_timer.cancel()
-            _health_check_timer = None
-            logger.debug("Фоновая проверка доступности сервиса конфигураций остановлена")
 
 
 def init_global_config_check() -> bool:
@@ -185,19 +116,14 @@ def init_global_config_check() -> bool:
     Returns:
         bool: True если сервис доступен, False если нет
     """
-    if _check_service_health():
-        return True
-    else:
-        _start_health_check()
-        return False
+    return check_global_config_available()
 
 
 def get_config_cache_stats() -> Dict[str, Any]:
     """Получение статистики кэша конфигураций (для отладки)"""
     return {
         'cache_size': len(_CONFIG_CACHE),
-        'cache_keys': list(_CONFIG_CACHE.keys()),
-        'global_service_available': _global_service_available
+        'cache_keys': list(_CONFIG_CACHE.keys())
     }
 
 
