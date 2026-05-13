@@ -6,8 +6,11 @@ import sys
 from flask import Flask
 
 from handlers.gate import init_gate
+
 from handlers.incoming_logger import IncomingRequestLogger
 from handlers.outgoing_logger import OutgoingRequestLogger
+from handlers.module_id_injector import inject_module_id_to_requests
+from handlers.rqid_injector import inject_rqid
 from maintenance.logging_config import setup_logging
 from maintenance.database_connector import initialize_database, is_database_initialized
 from maintenance.app_blueprint import register_blueprints, register_error_handlers
@@ -26,6 +29,15 @@ def create_app():
     # Сохраняем логгеры в конфигурации приложения для доступа из других модулей
     app.config['INCOMING_LOGGER'] = incoming_logger
     app.config['OUTGOING_LOGGER'] = outgoing_logger
+
+    # ИНИЦИАЛИЗАЦИЯ ИНЖЕКТОРОВ - ДОЛЖНА БЫТЬ ДО ШЛЮЗА
+    # Инъекция MODULE-ID во все исходящие requests запросы
+    inject_module_id_to_requests()
+    logger.info("ModuleIDInjector: глобальная инъекция MODULE-ID выполнена")
+    
+    # Инъекция Rqid (UUID) во все исходящие requests запросы
+    inject_rqid()
+    logger.info("RQIDInjector: глобальная инъекция rqid выполнена")
 
     # ИНИЦИАЛИЗАЦИЯ ШЛЮЗА - ДОЛЖНА БЫТЬ ДО ВСЕХ ДРУГИХ КОМПОНЕНТОВ
     init_gate(app)
