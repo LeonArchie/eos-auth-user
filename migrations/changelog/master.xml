@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ms/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ms/dbchangelog
+                        https://www.liquibase.org/xml/ms/dbchangelog.xsd">
+
+    <!-- Миграция 001 с внешним rollback -->
+    <changeSet id="1" author="lev.petunin" labels="schema">
+        <sqlFile
+            encoding="utf8"
+            endDelimiter=";"
+            relativeToChangelogFile="true"
+            splitStatements="true"
+            stripComments="true"
+            path="../scripts/migrations/001-initial-tables.sql"/>
+        <rollback>
+            <sqlFile
+                encoding="utf8"
+                endDelimiter=";"
+                relativeToChangelogFile="true"
+                splitStatements="true"
+                stripComments="true"
+                path="../scripts/rollbacks/001-initial-tables.rollback.sql"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Миграция 002 с внешним rollback -->
+    <changeSet id="2" author="lev.petunin" labels="schema">
+        <sqlFile
+            encoding="utf8"
+            endDelimiter=";"
+            relativeToChangelogFile="true"
+            splitStatements="true"
+            stripComments="true"
+            path="../scripts/migrations/002-triggers.sql"/>
+        <rollback>
+            <sqlFile
+                encoding="utf8"
+                endDelimiter=";"
+                relativeToChangelogFile="true"
+                splitStatements="true"
+                stripComments="true"
+                path="../scripts/rollbacks/002-triggers.rollback.sql"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Миграция 003 с внешним rollback -->
+    <changeSet id="3" author="lev.petunin" runAlways="true" labels="security">
+        <sqlFile
+            encoding="utf8"
+            endDelimiter=";"
+            relativeToChangelogFile="true"
+            splitStatements="true"
+            stripComments="true"
+            path="../scripts/migrations/003-all-privileges.sql"/>
+        <rollback>
+            <sqlFile
+                encoding="utf8"
+                endDelimiter=";"
+                relativeToChangelogFile="true"
+                splitStatements="true"
+                stripComments="true"
+                path="../scripts/rollbacks/003-all-privileges.rollback.sql"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
