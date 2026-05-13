@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- # SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
+# Copyright (C) 2025 Петунин Лев Михайлович -->
 <databaseChangeLog
     xmlns="http://www.liquibase.org/xml/ms/dbchangelog"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-only WITH LICENSE-ADDITIONAL
+# Copyright (C) 2025 Петунин Лев Михайлович
 apiVersion: apps/v1        # Версия API для работы с Deployments
 kind: Deployment           # Тип ресурса Kubernetes - Deployment
 metadata:
