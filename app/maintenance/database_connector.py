@@ -3,15 +3,96 @@
 # Copyright (C) 2025 Петунин Лев Михайлович
 
 import logging
+import time
 from contextlib import contextmanager
 from typing import Iterator
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
+from maintenance.configurations.get_global_config import get_global_config, SERVER_ERROR, DATA_ERROR
+from maintenance.configurations.get_env_config import get_env_config
+
 logger = logging.getLogger(__name__)
 
 # Глобальный экземпляр SQLAlchemy
 db = SQLAlchemy()
+
+
+def _get_db_config_with_retry(param_path: str, max_retries: int = 10, retry_delay: float = 5.0) -> str:
+    """
+    Получение параметра конфигурации из глобального сервиса с повторными попытками.
+    
+    :param param_path: путь к параметру
+    :param max_retries: максимальное количество попыток
+    :param retry_delay: задержка между попытками в секундах
+    :return: значение параметра
+    :raises: RuntimeError если параметр не получен после всех попыток
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            value = get_global_config(param_path)
+            
+            if value not in [SERVER_ERROR, DATA_ERROR]:
+                logger.info(f"Параметр {param_path} успешно получен")
+                return value
+            else:
+                logger.warning(f"Ошибка получения параметра {param_path} (попытка {attempt}/{max_retries})")
+        except Exception as e:
+            logger.warning(f"Исключение при получении параметра {param_path} (попытка {attempt}/{max_retries}): {str(e)}")
+        
+        if attempt < max_retries:
+            logger.info(f"Повторная попытка получения параметра {param_path} через {retry_delay} сек")
+            time.sleep(retry_delay)
+    
+    error_msg = f"Не удалось получить параметр {param_path} после {max_retries} попыток"
+    logger.error(error_msg)
+    raise RuntimeError(error_msg)
+
+
+def _load_db_configuration() -> dict:
+    """
+    Загрузка конфигурации БД из глобального сервиса конфигураций и .env файла.
+    
+    :return: словарь с параметрами подключения к БД
+    :raises: RuntimeError если не удалось загрузить конфигурацию
+    """
+    logger.info("Загрузка конфигурации БД из глобального сервиса конфигураций")
+    
+    # Параметры для получения из глобального сервиса
+    config_params = {
+        'master_host': 'db/master_host',
+        'master_port': 'db/master_port',
+        'database': 'db/database',
+        'pool_size': 'db/pool_size',
+        'max_overflow': 'db/max_overflow',
+        'pool_timeout': 'db/pool_timeout',
+        'pool_recycle': 'db/pool_recycle',
+        'pool_pre_ping': 'db/pool_pre_ping',
+        'max_retries': 'db/max_retries',
+        'retry_delay': 'db/retry_delay'
+    }
+    
+    config = {}
+    for key, param_path in config_params.items():
+        value = _get_db_config_with_retry(param_path)
+        config[key] = value
+        logger.info(f"Конфигурация {key}: {value}")
+    
+    # Загрузка учетных данных из .env
+    database_user = get_env_config('DATABASE_USER')
+    database_password = get_env_config('DB_PASSWORD')
+    
+    if not database_user:
+        raise RuntimeError("DATABASE_USER не найден в .env файле")
+    if not database_password:
+        raise RuntimeError("DB_PASSWORD не найден в .env файле")
+    
+    config['user'] = database_user
+    config['password'] = database_password
+    
+    logger.info("Учетные данные успешно загружены из .env")
+    
+    return config
 
 
 class DatabaseConnector:
@@ -33,12 +114,38 @@ class DatabaseConnector:
             raise RuntimeError("Flask приложение не передано для инициализации БД")
 
         try:
+            # Загружаем конфигурацию БД
+            db_config = _load_db_configuration()
+            
+            # Формируем строку подключения
+            connection_string = (
+                f"postgresql://{db_config['user']}:{db_config['password']}@"
+                f"{db_config['master_host']}:{db_config['master_port']}/"
+                f"{db_config['database']}"
+            )
+            
+            # Настраиваем Flask-SQLAlchemy
+            app.config['SQLALCHEMY_DATABASE_URI'] = connection_string
+            app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+            app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+                'pool_size': int(db_config['pool_size']),
+                'max_overflow': int(db_config['max_overflow']),
+                'pool_timeout': int(db_config['pool_timeout']),
+                'pool_recycle': int(db_config['pool_recycle']),
+                'pool_pre_ping': db_config['pool_pre_ping'].lower() == 'true',
+            }
+            
             self._app = app
             db.init_app(app)
 
             with app.app_context():
-                # Reflection существующих таблиц (для доступа через db.metadata.tables)
+                # Reflection существующих таблиц
                 db.metadata.reflect(bind=db.engine)
+                tables = list(db.metadata.tables.keys())
+                if tables:
+                    logger.info(f"Загружены таблицы через reflection: {tables}")
+                else:
+                    logger.warning("Не найдено таблиц в БД при reflection")
 
             self._initialized = True
             logger.info("База данных успешно инициализирована через Flask-SQLAlchemy")
