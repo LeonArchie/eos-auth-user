@@ -1,0 +1,35 @@
+gate:
+  api:
+    - name: test-ok
+      rule:
+        path: '^/test/ok$'
+        method: GET
+        ott: false
+        rqid: false
+        headers: []
+        body: 
+    - name: test-secure
+      rule:
+        path: '^/test/secure$'
+        method: POST
+        ott: false
+        rqid: true
+        headers:
+          - name: module-id
+            value: TEST-MODULE
+        body:
+          - username: '^[a-zA-Z0-9_]{3,20}$'
+          - password: '^.{6,100}$'
+    - name: test-login
+      rule:
+        path: '^/v1/auth/login$'
+        method: POST
+        ott: false
+        rqid: true
+        headers:
+          - name: module-id
+            value: TEST-CONF
+        body:
+          - login: '^[a-zA-Z0-9_.@-]+$'
+          - password: '^.{6,100}$'
+          - type: '^(internal|LDAP)$'

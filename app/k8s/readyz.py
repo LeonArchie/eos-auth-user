@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify
 import logging
 
-from maintenance.database_connector import is_database_healthy, is_database_initialized
+from maintenance.database_connector import is_database_healthy, is_database_initialized, is_database_enabled
 from maintenance.configurations.get_env_config import check_env_file_exists
 from maintenance.configurations.get_local_config import check_local_config_exists
 from maintenance.configurations.get_global_config import check_global_config_available
@@ -20,7 +20,7 @@ def _check_all_components():
     - .env файл
     - global.conf файл
     - глобальный сервис конфигураций
-    - база данных
+    - база данных (только если она включена)
 
     Returns:
         tuple: (успех, список проблем)
@@ -42,14 +42,19 @@ def _check_all_components():
     if not global_available:
         issues.append("Глобальный сервис конфигураций недоступен")
 
-    # Проверяем базу данных
-    db_initialized = is_database_initialized()
-    db_healthy = is_database_healthy()
+    # Проверяем базу данных только если она включена
+    db_enabled = is_database_enabled()
+    
+    if db_enabled:
+        db_initialized = is_database_initialized()
+        db_healthy = is_database_healthy()
 
-    if not db_initialized:
-        issues.append("База данных не инициализирована")
-    elif not db_healthy:
-        issues.append("База данных нездорова")
+        if not db_initialized:
+            issues.append("База данных не инициализирована")
+        elif not db_healthy:
+            issues.append("База данных нездорова")
+    else:
+        logger.info("Проверка БД пропущена - база данных отключена в конфигурации")
 
     return len(issues) == 0, issues
 
@@ -67,6 +72,8 @@ def readyz():
     logger.debug("Проверка readiness (готовности) сервиса")
 
     all_ok, issues = _check_all_components()
+    
+    db_enabled = is_database_enabled()
 
     response_data = {
         "status": all_ok,
@@ -75,8 +82,9 @@ def readyz():
             "env_file": check_env_file_exists(),
             "local_config": check_local_config_exists(),
             "global_config": check_global_config_available(),
-            "database_initialized": is_database_initialized(),
-            "database_healthy": is_database_healthy()
+            "database_enabled": db_enabled,
+            "database_initialized": is_database_initialized() if db_enabled else None,
+            "database_healthy": is_database_healthy() if db_enabled else None
         }
     }
 
