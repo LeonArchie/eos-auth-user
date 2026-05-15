@@ -3,7 +3,7 @@
 
 import logging
 from contextlib import contextmanager
-from typing import Iterator, Optional
+from typing import Iterator
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 

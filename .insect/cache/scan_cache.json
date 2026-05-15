@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "last_scan": "2026-05-13T19:42:24.916121",
+  "last_scan": "2026-05-15T21:21:12.124786",
   "file_hashes": {
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\README.md": {
       "hash": "a942ead89ab4a167382abbd5c69165ea5c4e3f85a1402a17a211f7bebe9be2ba",
@@ -8,7 +8,7 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.884286"
+          "timestamp": "2026-05-15T21:21:12.033358"
         }
       }
     },
@@ -18,7 +18,7 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.884556"
+          "timestamp": "2026-05-15T21:21:12.033610"
         },
         "config": {
           "findings": [
@@ -513,31 +513,31 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.884794"
+          "timestamp": "2026-05-15T21:21:12.033841"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\global.conf": {
-      "hash": "2a32490be5c227bf6819118aa8b3185d1da35dc92d98cb7c7bc659790f62ba4e",
-      "mtime": 1778353734.952109,
+      "hash": "9f79b6f4b7b50800fd7b742290e668df8f8cc97883cefb2e340d1de443cf3e2d",
+      "mtime": 1778856825.3622353,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.885065"
+          "timestamp": "2026-05-15T21:21:12.034265"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\schemas.yaml": {
-      "hash": "173a18e69836206755de3f34457324ed3cb4e50908baf6fc08721ea3301bb684",
-      "mtime": 1778353734.952109,
+      "hash": "074579204d0492f7bcedfe293a5baa42e349369f4081dfa9d660711bc33915c9",
+      "mtime": 1778695117.3806598,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.885712"
+          "timestamp": "2026-05-15T21:21:12.035179"
         },
         "config": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.912913"
+          "timestamp": "2026-05-15T21:21:12.119286"
         }
       }
     },
@@ -547,11 +547,11 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.885993"
+          "timestamp": "2026-05-15T21:21:12.035679"
         },
         "config": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.913634"
+          "timestamp": "2026-05-15T21:21:12.120301"
         }
       }
     },
@@ -561,27 +561,27 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.886859"
+          "timestamp": "2026-05-15T21:21:12.036789"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\gate.py": {
-      "hash": "19e1d3dd6f88a252c73bd9865792da400be0b01df7d634ad2284fda4c0481b6d",
-      "mtime": 1778689525.7250793,
+      "hash": "7cb986e85f5d88da4990ae81d1643b20fb497c4816bdc53f1fff35904c42435d",
+      "mtime": 1778691026.8486068,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.891094"
+          "timestamp": "2026-05-15T21:21:12.041170"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\incoming_logger.py": {
-      "hash": "ee4a4b6a0bcb4b15cc0a5ec5a2656a6c0c4cb35b12fa08bca0a1278593251cef",
-      "mtime": 1778353734.952109,
+      "hash": "3a05e872d216df5e2de6385f9722a2bab85d59a0ba9b13e84d1024fd510c5757",
+      "mtime": 1778866143.1055906,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.893426"
+          "timestamp": "2026-05-15T21:21:12.043532"
         }
       }
     },
@@ -591,17 +591,17 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.895304"
+          "timestamp": "2026-05-15T21:21:12.045524"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\outgoing_logger.py": {
-      "hash": "1c258e70d1474bb111551a47122344544d4dcd371584f2c9fc72059d0413cf24",
-      "mtime": 1778353734.952109,
+      "hash": "db4429e0e08b4c9f1e3494209df98aed38102e37f160213bc47eed473f0d6288",
+      "mtime": 1778866131.862001,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.897140"
+          "timestamp": "2026-05-15T21:21:12.047540"
         }
       }
     },
@@ -611,7 +611,7 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.898147"
+          "timestamp": "2026-05-15T21:21:12.048557"
         }
       }
     },
@@ -621,17 +621,17 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.898975"
+          "timestamp": "2026-05-15T21:21:12.049537"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\k8s\\readyz.py": {
-      "hash": "ec2e4deee69fbdf9a4cba58b58e2783364464cf1d426164a82b3c2bc7c0da9c3",
-      "mtime": 1778689541.11496,
+      "hash": "d9d40172ed61e294129834c616da49beecabe19dc86ed8c7685088db2a2c9c8d",
+      "mtime": 1778856250.4122732,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.899925"
+          "timestamp": "2026-05-15T21:21:12.050629"
         }
       }
     },
@@ -641,69 +641,37 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.900353"
+          "timestamp": "2026-05-15T21:21:12.051512"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\app_init.py": {
-      "hash": "2f6c5474eb471c2f11ded6227905d3eccadae685f5c1899e4dc1f36724c2ed02",
-      "mtime": 1778689911.408103,
+      "hash": "9441ebc5e2d2296575bab1045c4d2795df2aeba52b3fda614f8a7ec89c48498f",
+      "mtime": 1778695095.7881844,
       "analyzers": {
         "secrets": {
-          "findings": [
-            {
-              "id": "SECRET-DATABASE_CONNECTION_STRING",
-              "title": "Secret detected: Database Connection String",
-              "description": "Database connection string with embedded credentials detected\n\nDetected value: postgresql://{databa...",
-              "severity": "high",
-              "type": "secret",
-              "location": {
-                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\app_init.py",
-                "line_start": 31,
-                "line_end": null,
-                "column_start": 11,
-                "column_end": null,
-                "snippet": null
-              },
-              "analyzer": "secrets",
-              "confidence": 1.0,
-              "created_at": "2026-05-13T19:37:13.841408",
-              "references": [],
-              "tags": [],
-              "metadata": {
-                "secret_type": "Database Connection String",
-                "entropy": 4.031696958088742,
-                "length": 49,
-                "pattern_match": true,
-                "is_base64": false,
-                "is_hex": false
-              },
-              "remediation": null,
-              "cwe_id": null,
-              "cvss_score": null
-            }
-          ],
-          "timestamp": "2026-05-13T19:37:13.841951"
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.052497"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\audit.py": {
-      "hash": "15cf3b769d268cecb76b8074f98710480cc6b898580706fef3b8c9c3ecc1c12f",
-      "mtime": 1778619099.6999462,
+      "hash": "6c8db9b16feea88091ed9bb4799741403939a0ccd28876b58c332fc984783d56",
+      "mtime": 1778867186.223432,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.901713"
+          "timestamp": "2026-05-15T21:21:12.053984"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\database_connector.py": {
-      "hash": "803850b09b808ab385e01ff689907c847d2714b8364ac879caf2cf6a650fb766",
-      "mtime": 1778690104.0667844,
+      "hash": "574c3496675f23d4da9be5eb750a24b0b24c8d1a108d2d2d23148019039bb05a",
+      "mtime": 1778856322.111583,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.903063"
+          "timestamp": "2026-05-15T21:21:12.057237"
         }
       }
     },
@@ -713,75 +681,65 @@
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.904681"
-        }
-      }
-    },
-    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\valid_regular_expressions.py": {
-      "hash": "5fda4b363dfa7e069c4fbb18550e6b0909ec20a4d31a6118833ce0d0d2e5d349",
-      "mtime": 1778405504.5670981,
-      "analyzers": {
-        "secrets": {
-          "findings": [],
-          "timestamp": "2026-05-13T19:42:24.905382"
+          "timestamp": "2026-05-15T21:21:12.059040"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\configurations\\get_env_config.py": {
-      "hash": "9eac90fceaef966064f7fd6446b7487b5b4c5a09b3eb5eaa8273c68d67e2a6d4",
-      "mtime": 1778689468.9097776,
+      "hash": "3a456089f772b5507ef7ab6c4623c794ff19389721bb5dd428859d4b3c297b57",
+      "mtime": 1778695080.991453,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.906284"
+          "timestamp": "2026-05-15T21:21:12.060118"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\configurations\\get_global_config.py": {
-      "hash": "b2480b03cc3202d0f009364a6e0970b2c82fa3e1322bdd8aaa3c703d20182eee",
-      "mtime": 1778689530.847695,
+      "hash": "ac0881d45ace1ddd867cfd7d54aa88dfedb177d517112897e1c6fefafa36a752",
+      "mtime": 1778695079.8485816,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.908291"
+          "timestamp": "2026-05-15T21:21:12.061560"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\configurations\\get_local_config.py": {
-      "hash": "173e653928edf7744d384c0a61474b0ea2c719244624445e69048929ac388412",
-      "mtime": 1778689535.5959353,
+      "hash": "49f1559672553ed1bb9c40bb15235bb0a0d83e60699a92de5739e79e825bd06d",
+      "mtime": 1778695087.9342206,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.909609"
+          "timestamp": "2026-05-15T21:21:12.062896"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\k8s\\deployment.yaml": {
-      "hash": "c183802aa6b83165c20f33130624d361aed06358242dcc42ea3faaebffdfb249",
-      "mtime": 1778353734.952109,
+      "hash": "f54d6e5ddae3b85ff3d4624b4b76e86d9e88d1f4f3f31394f9fbac01b6961f77",
+      "mtime": 1778695143.0807016,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.910309"
+          "timestamp": "2026-05-15T21:21:12.063831"
         },
         "config": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.915447"
+          "timestamp": "2026-05-15T21:21:12.122328"
         }
       }
     },
     "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\k8s\\service.yaml": {
-      "hash": "1bbf57e00658f91480f562d30526cda0af59f2063b2d24d27224caed7f28f215",
-      "mtime": 1778353734.952109,
+      "hash": "730536ce3711a99b5f90a04865482c710c57ef77aa74856808cff43e4d8040d8",
+      "mtime": 1778695147.707711,
       "analyzers": {
         "secrets": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.910647"
+          "timestamp": "2026-05-15T21:21:12.064236"
         },
         "config": {
           "findings": [],
-          "timestamp": "2026-05-13T19:42:24.916119"
+          "timestamp": "2026-05-15T21:21:12.123147"
         }
       }
     },
@@ -1510,16 +1468,6 @@
         }
       }
     },
-    "app\\maintenance\\valid_regular_expressions.py": {
-      "hash": "5fda4b363dfa7e069c4fbb18550e6b0909ec20a4d31a6118833ce0d0d2e5d349",
-      "mtime": 1778405504.5670981,
-      "analyzers": {
-        "secrets": {
-          "findings": [],
-          "timestamp": "2026-05-13T00:35:08.461246"
-        }
-      }
-    },
     "app\\maintenance\\configurations\\get_env_config.py": {
       "hash": "5b819a82dbf1123ed279607c6250e1a8876e5729dc357b4d4dc7f6f84b437570",
       "mtime": 1778405504.5628972,
@@ -1620,121 +1568,542 @@
         }
       }
     },
-    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations_OLD\\001-initial-tables.sql": {
-      "hash": "5c3b3d63f732ebaa3ada2fece61f9b2cfe4aa237be7ab36ddc4057fd5b632fbc",
-      "mtime": 1778405504.5680988,
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\coverage.xml": {
+      "hash": "2dbf224291a7d7c0661a88489be3d89c47953996d2add702e222f916684bb1f3",
+      "mtime": 1778859297.8891575,
       "analyzers": {
         "secrets": {
-          "findings": [
-            {
-              "id": "SECRET-HIGH_ENTROPY",
-              "title": "High-entropy string detected",
-              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 5.42\nDetected value: MEUCIQCjxMs7KOMNLHts...",
-              "severity": "medium",
-              "type": "secret",
-              "location": {
-                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations_OLD\\001-initial-tables.sql",
-                "line_start": 1,
-                "line_end": null,
-                "column_start": 13,
-                "column_end": null,
-                "snippet": null
-              },
-              "analyzer": "secrets",
-              "confidence": 1.0,
-              "created_at": "2026-05-13T19:37:13.853973",
-              "references": [],
-              "tags": [],
-              "metadata": {
-                "secret_type": "High Entropy",
-                "entropy": 5.421954787265485,
-                "length": 96,
-                "pattern_match": false,
-                "is_base64": true,
-                "is_hex": false
-              },
-              "remediation": null,
-              "cwe_id": null,
-              "cvss_score": null
-            }
-          ],
-          "timestamp": "2026-05-13T19:37:13.854098"
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.031958"
         }
       }
     },
-    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations_OLD\\002-triggers.sql": {
-      "hash": "ef27974b131a10709d3bcc24d81d51cea435b6a253c70fa2a853ffdb8b4f769d",
-      "mtime": 1778405504.569098,
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\api\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
       "analyzers": {
         "secrets": {
-          "findings": [
-            {
-              "id": "SECRET-HIGH_ENTROPY",
-              "title": "High-entropy string detected",
-              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 5.58\nDetected value: MEUCIDbIouoBhYZtYqiH...",
-              "severity": "high",
-              "type": "secret",
-              "location": {
-                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations_OLD\\002-triggers.sql",
-                "line_start": 1,
-                "line_end": null,
-                "column_start": 13,
-                "column_end": null,
-                "snippet": null
-              },
-              "analyzer": "secrets",
-              "confidence": 1.0,
-              "created_at": "2026-05-13T19:37:13.854685",
-              "references": [],
-              "tags": [],
-              "metadata": {
-                "secret_type": "High Entropy",
-                "entropy": 5.584555208874202,
-                "length": 96,
-                "pattern_match": false,
-                "is_base64": true,
-                "is_hex": false
-              },
-              "remediation": null,
-              "cwe_id": null,
-              "cvss_score": null
-            }
-          ],
-          "timestamp": "2026-05-13T19:37:13.854781"
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.035902"
         }
       }
     },
-    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations_OLD\\003-all-privileges.sql": {
-      "hash": "58d33581c34e8ef99ec58317b9ab46e21cd611f6f18d8cb90f59caf28cda99a4",
-      "mtime": 1778405504.569098,
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\handlers\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.048725"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\k8s\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.050792"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.059214"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\app\\maintenance\\configurations\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.063065"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations\\changelog\\master.xml": {
+      "hash": "64709a3c58a43ccab62ad3b3a6da10b1d24eb706f8bae4c1d20b8ecc7417ca3d",
+      "mtime": 1778695177.313072,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.065154"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations\\scripts\\migrations\\001-initial-tables.sql": {
+      "hash": "706429093fc028a3fad0a0e24ae726ef4911369c3b3125e162a6596a40985296",
+      "mtime": 1778695185.6807563,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.066214"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations\\scripts\\migrations\\002-triggers.sql": {
+      "hash": "0d7fabab7b3fef3ae10b63744899c19ed12476b9d5d069333af7ce355e036e88",
+      "mtime": 1778695190.3667173,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.066763"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations\\scripts\\migrations\\003-all-privileges.sql": {
+      "hash": "c8b184e2df299727a4f361bb4fff3f155f82ea073dbe1d9547e8883d31201136",
+      "mtime": 1778695196.3657825,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.068114"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations\\scripts\\rollbacks\\001-initial-tables.rollback.sql": {
+      "hash": "f83942a66b1f8ab63f4c3dcb47e7eaf0578173f5658424e641ef41d3de7847f3",
+      "mtime": 1778695207.0002136,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.068467"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations\\scripts\\rollbacks\\002-triggers.rollback.sql": {
+      "hash": "f85d15037a420f59bd4fb11d29d1bad66512355f61bb9d06474bc082a6afa499",
+      "mtime": 1778695211.7689493,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.068813"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations\\scripts\\rollbacks\\003-all-privileges.rollback.sql": {
+      "hash": "c560a62a41ae4f88a3a7182e8e883c9a7028bb6414a970f1374e540a6a1bddbc",
+      "mtime": 1778695217.553576,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.069429"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\results\\eos-auth-user_results.json": {
+      "hash": "7cb293c698982117404470409b26bca88d21e742de8106121d13b32395e92708",
+      "mtime": 1778690699.5482442,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.075880"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.123278"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\conftest.py": {
+      "hash": "fccfecf866ec4860623bdf5529662020f3f48a323345a1a2b914d6f831054880",
+      "mtime": 1778866897.216147,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.079054"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\pytest.ini": {
+      "hash": "738f5e9b69b141807a7f91242755a3b7df8492c45a0cef01e2a86386421022ce",
+      "mtime": 1778862085.852272,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.079392"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\README.md": {
+      "hash": "79753d2d71382fb7af8ed8856b264bb5f7df65b5ea2f50dfce1e3c102206db3d",
+      "mtime": 1778858401.878757,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.079579"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\requirements-test.txt": {
+      "hash": "8eea638c43f24c195befa58178ac6c5438ffd458763c97043fee1e66674872ad",
+      "mtime": 1778858746.282633,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.079783"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.123393"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\run_tests.bat": {
+      "hash": "7e453befb77055ee1319f23b27a1b20e20f06ebaaa491cd9725169ffeddb1bc0",
+      "mtime": 1778862100.2072525,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.080100"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\run_tests.sh": {
+      "hash": "b964e8baf8dc7e964a1e452bf589f74d362ce802e1c6e8b4a28debbab0302e44",
+      "mtime": 1778857832.1757553,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.080704"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.080869"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\api\\test_health_api.py": {
+      "hash": "efc9879f76f3b98ec3f8f4c44bfd02df08d7629717fb699e988aa4270b87f143",
+      "mtime": 1778858219.2077525,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.082526"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\api\\test_integration_api.py": {
+      "hash": "8955540b4b5f86be9d6ddfb42e99af57422d39f2508954322adbe600fe1fc791",
+      "mtime": 1778858285.0168476,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.085279"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\api\\test_validation_api.py": {
+      "hash": "9582b65d3986788f2833bbd1ab287b085ef8d0d0c5d50f940e24d949b2a0515c",
+      "mtime": 1778858271.9010854,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.087640"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\api\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.087839"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_app_init.py": {
+      "hash": "c73a19ec8b1274ba1c7358a0f62f9c02357b3ea801d69f51da7e40e3c43dd052",
+      "mtime": 1778858158.1401105,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.089290"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_audit.py": {
+      "hash": "589a6724ca8d0a86172b6e01c14ac5bed9e3ec99be775b526f70963e6a95ef9a",
+      "mtime": 1778866896.1952655,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.090928"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_configurations.py": {
+      "hash": "6fd60ff76fe0745ccc6268a6335862be590c684ba6e543d671dcf7c00e5e0da1",
+      "mtime": 1778865809.3364453,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.092727"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_database_connector.py": {
+      "hash": "3778927565dd86e94053ac08f92d4f10022d0a6e8ccef1773bc663f558d3cb80",
+      "mtime": 1778857991.2708728,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.094131"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_error_handlers.py": {
+      "hash": "00d83a62e2c2dc55c436593029561dfb60fad61bb359e3b00e949bdbb59cfa22",
+      "mtime": 1778858098.937541,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.095697"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_gate.py": {
+      "hash": "2294c032d29c323c1691fdf7fb84888013b002bb1fc27f4b7e992037815d7350",
+      "mtime": 1778865861.811139,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.099534"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_healthz.py": {
+      "hash": "c44622f3a60c46f5ffd7130d83d0155bd138b11bb4c5cbba89a822ee5ddb64b5",
+      "mtime": 1778857900.6922967,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.101520"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_injectors.py": {
+      "hash": "66ff87ff8c594e3339b43fe34c5876d0c4cff53c1f430f9997bab720c5934f3d",
+      "mtime": 1778865977.2745068,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.103767"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_loggers.py": {
+      "hash": "505ce758a4ea1cd745d2d33ad9d28871041d067d021ee2c4d5932a1b9bd89c6c",
+      "mtime": 1778858031.3715532,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.106247"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\test_readyz.py": {
+      "hash": "8cb5c8730466b7da49fc4e92ff2b03205ae7bcad5d754cdad97f6652087c1147",
+      "mtime": 1778857911.2903824,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.107928"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\app\\__init__.py": {
+      "hash": "2a1d7c4c83cf0198b7726dddcb40f514463270b5b1d748510114324040dcf3eb",
+      "mtime": 1778857561.6805112,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.108100"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\fixtures\\test.env": {
+      "hash": "2b83d2c6b10ee0c4597ea7af9254a0188a38d33f509b20c3d55a2a5c655442fb",
+      "mtime": 1778858361.0389464,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.108301"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\fixtures\\test_global.conf": {
+      "hash": "ef0cec1c370f13c70e9b331eb42ee13d767848cb5803522a4956ca4c5fe67f36",
+      "mtime": 1778860701.4774368,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.108617"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\fixtures\\test_schemas.yaml": {
+      "hash": "0dad18f915a6606cc4d3a3ba2b89456a96b525adba9fc593e523a4dbff50d586",
+      "mtime": 1778862620.568555,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.109014"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.124664"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\htmlcov\\coverage_html.js": {
+      "hash": "b9fe6faf811b0e1c68329a00f451f062b76107cb1f9ba11eee782d62948b1a7f",
+      "mtime": 1778861008.3367012,
+      "analyzers": {
+        "secrets": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.114873"
+        }
+      }
+    },
+    "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\htmlcov\\status.json": {
+      "hash": "c1615fb1e823eca7ce0320fe3a40d993a3ba558123655db26038542febcf2348",
+      "mtime": 1778861008.33571,
       "analyzers": {
         "secrets": {
           "findings": [
             {
               "id": "SECRET-HIGH_ENTROPY",
               "title": "High-entropy string detected",
-              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 5.57\nDetected value: MEUCIDfYVFHrLFd98GwY...",
-              "severity": "high",
+              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 4.61\nDetected value: d_560af3e248f171ca_i...",
+              "severity": "low",
               "type": "secret",
               "location": {
-                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\migrations_OLD\\003-all-privileges.sql",
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\htmlcov\\status.json",
                 "line_start": 1,
                 "line_end": null,
-                "column_start": 13,
+                "column_start": 1005,
                 "column_end": null,
                 "snippet": null
               },
               "analyzer": "secrets",
               "confidence": 1.0,
-              "created_at": "2026-05-13T19:37:13.855974",
+              "created_at": "2026-05-15T21:21:12.116389",
               "references": [],
               "tags": [],
               "metadata": {
                 "secret_type": "High Entropy",
-                "entropy": 5.568828385912465,
-                "length": 96,
+                "entropy": 4.6124391489177246,
+                "length": 42,
                 "pattern_match": false,
-                "is_base64": true,
+                "is_base64": false,
+                "is_hex": false
+              },
+              "remediation": null,
+              "cwe_id": null,
+              "cvss_score": null
+            },
+            {
+              "id": "SECRET-HIGH_ENTROPY",
+              "title": "High-entropy string detected",
+              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 4.62\nDetected value: d_560af3e248f171ca_m...",
+              "severity": "low",
+              "type": "secret",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\htmlcov\\status.json",
+                "line_start": 1,
+                "line_end": null,
+                "column_start": 1297,
+                "column_end": null,
+                "snippet": null
+              },
+              "analyzer": "secrets",
+              "confidence": 1.0,
+              "created_at": "2026-05-15T21:21:12.116430",
+              "references": [],
+              "tags": [],
+              "metadata": {
+                "secret_type": "High Entropy",
+                "entropy": 4.622532752357146,
+                "length": 45,
+                "pattern_match": false,
+                "is_base64": false,
+                "is_hex": false
+              },
+              "remediation": null,
+              "cwe_id": null,
+              "cvss_score": null
+            },
+            {
+              "id": "SECRET-HIGH_ENTROPY",
+              "title": "High-entropy string detected",
+              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 4.61\nDetected value: d_560af3e248f171ca_o...",
+              "severity": "low",
+              "type": "secret",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\htmlcov\\status.json",
+                "line_start": 1,
+                "line_end": null,
+                "column_start": 1591,
+                "column_end": null,
+                "snippet": null
+              },
+              "analyzer": "secrets",
+              "confidence": 1.0,
+              "created_at": "2026-05-15T21:21:12.116459",
+              "references": [],
+              "tags": [],
+              "metadata": {
+                "secret_type": "High Entropy",
+                "entropy": 4.612439148917726,
+                "length": 42,
+                "pattern_match": false,
+                "is_base64": false,
+                "is_hex": false
+              },
+              "remediation": null,
+              "cwe_id": null,
+              "cvss_score": null
+            },
+            {
+              "id": "SECRET-HIGH_ENTROPY",
+              "title": "High-entropy string detected",
+              "description": "High-entropy string detected that may be a secret.\n\nEntropy: 4.67\nDetected value: d_560af3e248f171ca_r...",
+              "severity": "low",
+              "type": "secret",
+              "location": {
+                "path": "C:\\Users\\Archie\\Documents\\repo\\eos-auth-user\\test\\htmlcov\\status.json",
+                "line_start": 1,
+                "line_end": null,
+                "column_start": 1878,
+                "column_end": null,
+                "snippet": null
+              },
+              "analyzer": "secrets",
+              "confidence": 1.0,
+              "created_at": "2026-05-15T21:21:12.116486",
+              "references": [],
+              "tags": [],
+              "metadata": {
+                "secret_type": "High Entropy",
+                "entropy": 4.671928094887363,
+                "length": 40,
+                "pattern_match": false,
+                "is_base64": false,
                 "is_hex": false
               },
               "remediation": null,
@@ -1742,7 +2111,11 @@
               "cvss_score": null
             }
           ],
-          "timestamp": "2026-05-13T19:37:13.856063"
+          "timestamp": "2026-05-15T21:21:12.116919"
+        },
+        "config": {
+          "findings": [],
+          "timestamp": "2026-05-15T21:21:12.124784"
         }
       }
     }
