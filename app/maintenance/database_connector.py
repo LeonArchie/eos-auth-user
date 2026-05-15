@@ -2,13 +2,12 @@
 # Copyright (C) 2025 Петунин Лев Михайлович
 
 import logging
-import time
 from contextlib import contextmanager
 from typing import Iterator
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
-from maintenance.configurations.get_global_config import get_global_config, SERVER_ERROR, DATA_ERROR
+from maintenance.configurations.get_local_config import get_local_config
 from maintenance.configurations.get_env_config import get_env_config
 
 logger = logging.getLogger(__name__)
@@ -17,63 +16,51 @@ logger = logging.getLogger(__name__)
 db = SQLAlchemy()
 
 
-def _get_db_config_with_retry(param_path: str, max_retries: int = 10, retry_delay: float = 5.0) -> str:
+def _get_db_config(param_name: str) -> str:
     """
-    Получение параметра конфигурации из глобального сервиса с повторными попытками.
+    Получение параметра конфигурации из global.conf.
     
-    :param param_path: путь к параметру
-    :param max_retries: максимальное количество попыток
-    :param retry_delay: задержка между попытками в секундах
+    :param param_name: имя параметра в global.conf
     :return: значение параметра
-    :raises: RuntimeError если параметр не получен после всех попыток
+    :raises: RuntimeError если параметр не получен
     """
-    for attempt in range(1, max_retries + 1):
-        try:
-            value = get_global_config(param_path)
-            
-            if value not in [SERVER_ERROR, DATA_ERROR]:
-                logger.info(f"Параметр {param_path} успешно получен")
-                return value
-            else:
-                logger.warning(f"Ошибка получения параметра {param_path} (попытка {attempt}/{max_retries})")
-        except Exception as e:
-            logger.warning(f"Исключение при получении параметра {param_path} (попытка {attempt}/{max_retries}): {str(e)}")
-        
-        if attempt < max_retries:
-            logger.info(f"Повторная попытка получения параметра {param_path} через {retry_delay} сек")
-            time.sleep(retry_delay)
+    value = get_local_config(param_name)
     
-    error_msg = f"Не удалось получить параметр {param_path} после {max_retries} попыток"
-    logger.error(error_msg)
-    raise RuntimeError(error_msg)
+    if value is not None:
+        logger.info(f"Параметр {param_name} успешно получен")
+        return value
+    else:
+        error_msg = f"Не удалось получить параметр {param_name} из global.conf"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
 
 
 def _load_db_configuration() -> dict:
     """
-    Загрузка конфигурации БД из глобального сервиса конфигураций и .env файла.
+    Загрузка конфигурации БД из global.conf и .env файла.
     
     :return: словарь с параметрами подключения к БД
     :raises: RuntimeError если не удалось загрузить конфигурацию
     """
-    logger.info("Загрузка конфигурации БД из глобального сервиса конфигураций")
+    logger.info("Загрузка конфигурации БД из global.conf")
     
-    # Параметры для получения из глобального сервиса
+    # Параметры для получения из global.conf
     config_params = {
-        'master_host': 'db/master_host',
-        'master_port': 'db/master_port',
-        'database': 'db/database',
-        'pool_size': 'db/pool_size',
-        'max_overflow': 'db/max_overflow',
-        'pool_timeout': 'db/pool_timeout',
-        'pool_recycle': 'db/pool_recycle',
-        'pool_pre_ping': 'db/pool_pre_ping',
-        'max_retries': 'db/max_retries',
-        'retry_delay': 'db/retry_delay'
+        'master_host': 'MASTER_HOST',
+        'master_port': 'MASTER_PORT',
+        'database': 'DB_NAME',
+        'pool_size': 'DB_POOL_SIZE',
+        'max_overflow': 'DB_MAX_OVERFLOW',
+        'pool_timeout': 'DB_POOL_TIMEOUT',
+        'pool_recycle': 'DB_POOL_RECYCLE',
+        'pool_pre_ping': 'DB_POOL_PRE_PING',
+        'max_retries': 'DB_MAX_RETRIES',
+        'retry_delay': 'RETRY_DELAY'
     }
     
     config = {}
-    for key, param_path in config_params.items():
-        value = _get_db_config_with_retry(param_path)
+    for key, param_name in config_params.items():
+        value = _get_db_config(param_name)
         config[key] = value
         logger.info(f"Конфигурация {key}: {value}")
     
