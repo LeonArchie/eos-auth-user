@@ -308,7 +308,7 @@ def capture_logs(caplog):
 def reset_audit_module():
     """Сбрасывает состояние модуля аудита"""
     try:
-        import handlers.audit as audit_module
+        import maintenance.audit as audit_module
         audit_module._module_name = None
         audit_module._audit_url = None
         audit_module._logger = None
@@ -316,7 +316,7 @@ def reset_audit_module():
         pass
     yield
     try:
-        import handlers.audit as audit_module
+        import maintenance.audit as audit_module
         audit_module._module_name = None
         audit_module._audit_url = None
         audit_module._logger = None

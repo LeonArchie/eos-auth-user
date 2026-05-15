@@ -3,7 +3,7 @@
 
 import requests
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 # Кэшированные параметры
@@ -79,7 +79,7 @@ def audit(object_id: str, initiator_id: str, message: str) -> None:
             "object_id": object_id,
             "initiator_id": initiator_id,
             "message": message,
-            "time": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+            "time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         }
         
         # Формируем полный URL с добавлением /v1/create

@@ -19,7 +19,7 @@ class TestAudit:
         mock_response.status_code = 200
         mock_post = mocker.patch('requests.post', return_value=mock_response)
         
-        from handlers.audit import audit
+        from maintenance.audit import audit
         
         with freeze_time("2024-01-01 12:00:00"):
             audit('object-123', 'user-456', 'Test audit message')
@@ -45,7 +45,7 @@ class TestAudit:
         
         mocker.patch('requests.post', side_effect=Exception('Network error'))
         
-        from handlers.audit import audit
+        from maintenance.audit import audit
         
         audit('object-123', 'user-456', 'Test message')
         
@@ -61,7 +61,7 @@ class TestAudit:
         mock_response.text = 'Internal Server Error'
         mock_post = mocker.patch('requests.post', return_value=mock_response)
         
-        from handlers.audit import audit
+        from maintenance.audit import audit
         
         audit('object-123', 'user-456', 'Test message')
         
@@ -76,7 +76,7 @@ class TestAudit:
         from requests.exceptions import Timeout
         mocker.patch('requests.post', side_effect=Timeout())
         
-        from handlers.audit import audit
+        from maintenance.audit import audit
         
         audit('object-123', 'user-456', 'Test message')
         
@@ -86,7 +86,7 @@ class TestAudit:
         """Тест загрузки конфигурации аудита"""
         monkeypatch.chdir(temp_project_dir)
         
-        import handlers.audit as audit_module
+        import maintenance.audit as audit_module
         
         # Сбрасываем состояние
         audit_module._module_name = None
@@ -102,7 +102,7 @@ class TestAudit:
         """Тест когда файл конфигурации отсутствует"""
         monkeypatch.chdir(tmp_path)
         
-        import handlers.audit as audit_module
+        import maintenance.audit as audit_module
         
         audit_module._module_name = None
         audit_module._audit_url = None
@@ -120,7 +120,7 @@ class TestAudit:
         mock_response.json.side_effect = Exception('Invalid JSON')
         mocker.patch('requests.post', return_value=mock_response)
         
-        from handlers.audit import audit
+        from maintenance.audit import audit
         
         # Не должно вызвать исключение
         audit('object-123', 'user-456', 'Test message')
@@ -133,7 +133,7 @@ class TestAudit:
         mock_response.status_code = 200
         mock_post = mocker.patch('requests.post', return_value=mock_response)
         
-        from handlers.audit import audit
+        from maintenance.audit import audit
         
         audit('object-123', 'user-456', 'Test message')
         
