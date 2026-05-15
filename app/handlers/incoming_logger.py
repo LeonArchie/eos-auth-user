@@ -4,7 +4,7 @@
 import json
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import request
 from typing import Dict, Any, Optional
 
@@ -115,7 +115,7 @@ class IncomingRequestLogger:
             filtered_headers = self._filter_sensitive_data(dict(request.headers))
             
             request_info = {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'type': 'INCOMING_REQUEST',
                 'method': request.method,
                 'path': request.path,
@@ -150,7 +150,7 @@ class IncomingRequestLogger:
             filtered_response_headers = self._filter_sensitive_data(dict(response.headers))
             
             response_info = {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'type': 'OUTGOING_RESPONSE',
                 'method': request.method,
                 'path': request.path,

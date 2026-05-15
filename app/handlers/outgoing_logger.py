@@ -6,6 +6,7 @@ import time
 import logging
 from datetime import datetime
 from typing import Dict, Any, Optional
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ class OutgoingRequestLogger:
             filtered_headers = self._filter_sensitive_data(headers)
 
             request_info = {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'type': 'OUTGOING_REQUEST',
                 'method': method.upper(),
                 'url': url,
@@ -102,7 +103,7 @@ class OutgoingRequestLogger:
             filtered_headers = self._filter_sensitive_data(headers)
 
             response_info = {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
                 'type': 'OUTGOING_RESPONSE',
                 'url': url,
                 'status_code': status_code,

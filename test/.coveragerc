@@ -1,0 +1,23 @@
+[run]
+source = .
+omit = 
+    test/*
+    */test_*.py
+    */__init__.py
+    */migrations/*
+    venv/*
+    .venv/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
+    pass
+
+show_missing = True
+precision = 2
